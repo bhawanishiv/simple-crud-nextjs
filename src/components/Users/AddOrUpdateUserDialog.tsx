@@ -55,7 +55,7 @@ const AddOrUpdateUserDialog: React.FC<AddOrUpdateUserDialogProps> = (props) => {
   const renderAddOrUpdateUserDialog = () => {
     return (
       <Dialog open={open} onClose={handleClose}>
-        <h2>Add a user</h2>
+        <h2>{user ? 'Update user' : 'Add a user'}</h2>
         <form onSubmit={handleSubmit(handleAddOrUpdateUser)}>
           <div className="py-1">
             <label>First name</label>
