@@ -58,6 +58,8 @@ const getUsers = async (req: NextApiRequest, res: NextApiResponse) => {
           lastName: 1,
           email: 1,
           role: 1,
+          createdAt: 1,
+          updatedAt: 1,
           _id: 0,
         },
       },
@@ -77,9 +79,9 @@ const getUsers = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.json(response);
   } catch (e) {
     if (e instanceof ZodError) {
-      return res.status(401).json(e.errors[0]);
+      return res.status(400).json(e.errors[0]);
     }
-    return res.status(401).json({ message: (e as Error).message });
+    return res.status(400).json({ message: (e as Error).message });
   }
 };
 
@@ -93,19 +95,22 @@ const createUser = async (req: NextApiRequest, res: NextApiResponse) => {
     const emailExists = await User.findOne({ email: user.email });
 
     if (emailExists) {
-      return res.status(401).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
     const newUser = new User({ ...user });
     const createdUser = await newUser.save();
 
     if (!createdUser) throw new Error("Couldn't create user");
-    return res.json({ user: { uid: createdUser._id, ...user } });
+    const { _id, ...rest } = createdUser.toObject();
+    return res.json({
+      user: { ...rest, uid: _id.toString() },
+    });
   } catch (e) {
     if (e instanceof ZodError) {
-      return res.status(401).json(e.errors[0]);
+      return res.status(400).json(e.errors[0]);
     }
-    return res.status(401).json({ message: (e as Error).message });
+    return res.status(400).json({ message: (e as Error).message });
   }
 };
 
@@ -121,7 +126,7 @@ const updateUser = async (req: NextApiRequest, res: NextApiResponse) => {
     const emailExists = await User.findOne({ email: user.email });
 
     if (emailExists && emailExists._id.toString() !== uid) {
-      return res.status(401).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -138,9 +143,9 @@ const updateUser = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.json({ user: { ...restObj, uid } });
   } catch (e) {
     if (e instanceof ZodError) {
-      return res.status(401).json(e.errors[0]);
+      return res.status(400).json(e.errors[0]);
     }
-    return res.status(401).json({ message: (e as Error).message });
+    return res.status(400).json({ message: (e as Error).message });
   }
 };
 
@@ -168,9 +173,9 @@ const deleteUser = async (req: NextApiRequest, res: NextApiResponse) => {
     });
   } catch (e) {
     if (e instanceof ZodError) {
-      return res.status(401).json(e.errors[0]);
+      return res.status(400).json(e.errors[0]);
     }
-    return res.status(401).json({ message: (e as Error).message });
+    return res.status(400).json({ message: (e as Error).message });
   }
 };
 
@@ -195,5 +200,5 @@ export default async function handler(
     }
   }
 
-  res.status(401).json({ message: 'Invalid input' });
+  res.status(400).json({ message: 'Invalid input' });
 }

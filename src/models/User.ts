@@ -1,4 +1,4 @@
-import { models, Schema, model } from 'mongoose';
+import { models, Schema, Model, model } from 'mongoose';
 
 import { IUser } from '@/interfaces/User';
 
@@ -31,4 +31,5 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-export default models['User'] || model<IUser>('User', userSchema);
+export default (models['User'] as Model<IUser>) ||
+  model<IUser>('User', userSchema);
