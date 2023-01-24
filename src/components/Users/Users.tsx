@@ -24,8 +24,7 @@ const Users: React.FC<UsersProps> = (props) => {
   const getUsers = async (skip: number = 0, limit: number = 10) => {
     const res = await fetch(`/api/users?limit=${limit}&skip=${skip}`);
     const data = await res.json();
-    if (!data) return;
-    console.log(`data->`, data);
+    if (!data || !data.users) return;
     setCount(data.count);
     setUsers(data.users);
   };
