@@ -5,18 +5,22 @@ import { z, ZodError } from 'zod';
 
 import mongoClient from '@/lib/mongo';
 import DynamicSchemaField from '@/models/DynamicSchemaField';
+import { FieldTypeEnum } from '@/interfaces/DynamicSchema';
 
 const CreateDynamicFieldSchema = z.object({
   title: z.string().trim(),
-  name: z.string().trim().transform(_.camelCase),
+  name: z.string().trim().optional().transform(_.camelCase),
+  type: FieldTypeEnum,
   unique: z.boolean().optional(),
   required: z.boolean().optional(),
-  default: z.union([
-    z.string().trim(),
-    z.boolean(),
-    z.number(),
-    z.array(z.string().trim()),
-  ]),
+  default: z
+    .union([
+      z.string().trim(),
+      z.boolean(),
+      z.number(),
+      z.array(z.string().trim()),
+    ])
+    .optional(),
 });
 
 const UpdateFieldSchema = z.object({
@@ -36,7 +40,19 @@ const getFields = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const fields = await DynamicSchemaField.find(
       { schema: schemaId },
-      { id: '_id', _id: 0 }
+      {
+        id: '$_id',
+        _id: 0,
+        title: 1,
+        name: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        schema: 1,
+        type: 1,
+        required: 1,
+        unique: 1,
+        default: 1,
+      }
     ).exec();
 
     if (!fields) throw new Error("Couldn't find schema fields");
@@ -59,12 +75,14 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const field = CreateDynamicFieldSchema.parse(req.body);
 
+    const name = field.name || _.camelCase(field.title);
+
     await mongoClient;
 
     const fieldNameExists = await DynamicSchemaField.findOne({
       $and: [
         {
-          name: field.name,
+          name,
         },
         {
           schema: schemaId,
@@ -76,7 +94,11 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).json({ message: 'Field name already exists' });
     }
 
-    const newField = new DynamicSchemaField({ schema: schemaId, ...field });
+    const newField = new DynamicSchemaField({
+      ...field,
+      name,
+      schema: schemaId,
+    });
     const createdField = await newField.save();
 
     if (!createdField) throw new Error("Couldn't create field");

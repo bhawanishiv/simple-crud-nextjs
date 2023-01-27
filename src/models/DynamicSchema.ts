@@ -22,5 +22,5 @@ const dynamicSchemaSchema = new Schema<IDynamicSchema>(
   }
 );
 
-export default (models['IDynamicSchema'] as Model<IDynamicSchema>) ||
-  model<IDynamicSchema>('IDynamicSchema', dynamicSchemaSchema);
+export default (models['DynamicSchema'] as Model<IDynamicSchema>) ||
+  model<IDynamicSchema>('DynamicSchema', dynamicSchemaSchema);

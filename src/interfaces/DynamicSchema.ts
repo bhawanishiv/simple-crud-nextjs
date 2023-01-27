@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export interface IDynamicSchema {
   id: string;
   title: string;
@@ -6,15 +8,19 @@ export interface IDynamicSchema {
   updatedAt: Date;
 }
 
-export type IDynamicSchemaFieldType =
-  | 'number'
-  | 'boolean'
-  | 'text'
-  | 'multi-text'
-  | 'list'
-  | 'date';
+export const FieldTypeEnum = z.enum([
+  'number',
+  'boolean',
+  'text',
+  'multi-text',
+  'list',
+  'date',
+]);
+
+export type IDynamicSchemaFieldType = z.infer<typeof FieldTypeEnum>;
 
 export interface IDynamicSchemaField {
+  id: string;
   schema: string | object;
   title: string;
   name: string;

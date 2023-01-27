@@ -1,3 +1,5 @@
+'use client';
+
 import { IUser } from '@/interfaces/User';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddOrUpdateUserDialog from './AddOrUpdateUserDialog';
@@ -10,24 +12,18 @@ const columns: { title: string; key: keyof IUser }[] = [
   { title: 'Last updated', key: 'updatedAt' },
 ];
 
-type UsersProps = {};
+type UsersProps = {
+  users: IUser[];
+  count: number;
+  onUsersUpdate: (users: IUser[]) => void;
+};
 
 const Users: React.FC<UsersProps> = (props) => {
-  const {} = props;
+  const { users, count, onUsersUpdate } = props;
 
-  const [users, setUsers] = useState<IUser[]>([]);
-  const [count, setCount] = useState(0);
   const [addOrUpdateUserDialogOpen, setAddOrUpdateUserDialogOpen] = useState<
     boolean | { user: IUser; index: number }
   >(false);
-
-  const getUsers = async (skip: number = 0, limit: number = 10) => {
-    const res = await fetch(`/api/users?limit=${limit}&skip=${skip}`);
-    const data = await res.json();
-    if (!data || !data.users) return;
-    setCount(data.count);
-    setUsers(data.users);
-  };
 
   const handleAddUserRequest = useCallback(() => {
     setAddOrUpdateUserDialogOpen(true);
@@ -49,7 +45,7 @@ const Users: React.FC<UsersProps> = (props) => {
       if (!res.ok) return;
       const newUsers = [...users];
       newUsers.splice(index, 1);
-      setUsers(newUsers);
+      onUsersUpdate(newUsers);
     } catch (e) {}
   };
 
@@ -57,13 +53,13 @@ const Users: React.FC<UsersProps> = (props) => {
     if (typeof addOrUpdateUserDialogOpen === 'object') {
       const newUsers = [...users];
       newUsers[addOrUpdateUserDialogOpen.index] = user;
-      setUsers(newUsers);
+      onUsersUpdate(newUsers);
       setAddOrUpdateUserDialogOpen(false);
       return;
     }
 
     const newUsers = [user, ...users];
-    setUsers(newUsers);
+    onUsersUpdate(newUsers);
     setAddOrUpdateUserDialogOpen(false);
   };
 
@@ -132,10 +128,6 @@ const Users: React.FC<UsersProps> = (props) => {
       </>
     );
   };
-
-  useEffect(() => {
-    getUsers(0, 100);
-  }, []);
 
   return renderUsers();
 };
