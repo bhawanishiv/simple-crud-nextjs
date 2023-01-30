@@ -27,8 +27,8 @@ const getSchemaFields = async (schemaId: string) => {
 const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
   const { schema } = props;
 
-  const { isLoading, data, mutate } = useSwr(`${schema.id}`, () =>
-    getSchemaFields(schema.id)
+  const { isLoading, data, mutate } = useSwr(`${schema.name}`, () =>
+    getSchemaFields(schema.name)
   );
 
   const [currentField, setCurrentField] = useState<boolean | any>(null);

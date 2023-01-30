@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 
 import cx from 'classnames';
+import _ from 'lodash';
 
 import useSwr from 'swr';
 
@@ -20,7 +22,6 @@ import { IDynamicSchema } from '@/interfaces/DynamicSchema';
 
 import SchemaDetails from './components/SchemaDetails';
 import AddOrUpdateSchema from './components/AddOrUpdateSchema';
-import { useRouter } from 'next/router';
 
 const getSchemas = async (skip: number = 0, limit: number = 10) => {
   const res = await fetch(`/api/schemas?limit=${limit}&skip=${skip}`);

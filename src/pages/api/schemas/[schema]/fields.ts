@@ -6,6 +6,7 @@ import { z, ZodError } from 'zod';
 import mongoClient from '@/lib/mongo';
 import DynamicSchemaField from '@/models/DynamicSchemaField';
 import { FieldTypeEnum } from '@/interfaces/DynamicSchema';
+import DynamicSchema from '@/models/DynamicSchema';
 
 const CreateDynamicFieldSchema = z.object({
   title: z.string().trim(),
@@ -32,14 +33,28 @@ type Data = {
   message: string;
 };
 
-const getFields = async (req: NextApiRequest, res: NextApiResponse) => {
+const getSchemaAndFields = async (
+  req: NextApiRequest,
+  res: NextApiResponse
+) => {
   try {
     await mongoClient;
 
-    const schemaId = z.string().trim().parse(req.query['schema']);
+    const schemaName = z
+      .string()
+      .trim()
+      .transform((v) => _.capitalize(_.camelCase(v)))
+      .parse(req.query['schema']);
 
+    const schema = await DynamicSchema.findOne({ name: schemaName });
+
+    if (!schema) {
+      return res.status(404).json({ message: "Couldn't the find schema" });
+    }
+
+    const id = schema._id.toString();
     const fields = await DynamicSchemaField.find(
-      { schema: schemaId },
+      { schema: id },
       {
         id: '$_id',
         _id: 0,
@@ -57,6 +72,7 @@ const getFields = async (req: NextApiRequest, res: NextApiResponse) => {
 
     if (!fields) throw new Error("Couldn't find schema fields");
     const response = {
+      schema: { ...schema.toObject(), id },
       fields: fields,
     };
 
@@ -148,7 +164,7 @@ export default async function handler(
 ) {
   switch (req.method) {
     case 'GET': {
-      return await getFields(req, res);
+      return await getSchemaAndFields(req, res);
     }
     case 'POST': {
       return await createField(req, res);

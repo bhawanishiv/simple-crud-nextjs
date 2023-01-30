@@ -53,7 +53,7 @@ const fieldTypeMapper: { [key in IDynamicSchemaFieldType]: FieldMapperResult } =
     list: String,
     number: Number,
     text: String,
-    'multi-text': [{ type: String }],
+    'multi-text': String,
   };
 
 const getFieldDef = (field: IDynamicSchemaField) => {

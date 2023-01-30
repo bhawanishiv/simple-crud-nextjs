@@ -4,6 +4,9 @@ import { AppProps } from 'next/app';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { CacheProvider, EmotionCache } from '@emotion/react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+
 import theme from '@/themes';
 import createEmotionCache from '@/lib/createEmotionCache';
 
@@ -35,7 +38,9 @@ export default function MyApp(props: MyAppProps) {
       <ThemeProvider theme={theme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
-        <Component {...pageProps} />
+        <LocalizationProvider dateAdapter={AdapterMoment}>
+          <Component {...pageProps} />
+        </LocalizationProvider>
       </ThemeProvider>
     </CacheProvider>
   );
