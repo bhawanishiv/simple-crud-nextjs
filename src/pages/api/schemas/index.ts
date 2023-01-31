@@ -20,6 +20,7 @@ const UpdateSchemaSchema = z.object({
 });
 
 const GetSchemasSchema = z.object({
+  query: z.string().trim().optional(),
   limit: z.preprocess(
     (a) => parseInt(z.string().parse(a), 10),
     z.number().nonnegative().max(100)
@@ -38,11 +39,21 @@ type Data = {
 
 const getSchemas = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    const { limit, skip, sort } = GetSchemasSchema.parse(req.query);
+    const { query, limit, skip, sort } = GetSchemasSchema.parse(req.query);
     await mongoClient;
 
+    let filter = query
+      ? {
+          title: {
+            $regex: query,
+            $options: 'i',
+          },
+        }
+      : {};
     const schemas = await DynamicSchema.aggregate([
-      { $match: {} },
+      {
+        $match: filter,
+      },
       { $limit: limit },
       { $skip: skip },
       { $sort: { firstName: 1, ...sort } },

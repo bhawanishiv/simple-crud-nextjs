@@ -95,6 +95,7 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
       <div className="w-full">
         <AddOrUpdateSchemaField
           schemaId={schema.id}
+          schemaName={schema.name}
           field={typeof currentField === 'object' ? currentField : undefined}
           open={Boolean(currentField)}
           onClose={handleAddOrUpdateFieldClose}
