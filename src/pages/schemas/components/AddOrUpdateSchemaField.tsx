@@ -34,12 +34,11 @@ const fieldTypes = [
   { label: 'Boolean', value: 'boolean' },
   { label: 'Date', value: 'date' },
   { label: 'List', value: 'list' },
-  { label: 'Relationship', value: 'relationship' },
+  { label: 'Relationship', value: 'related' },
 ];
 
 type AddOrUpdateSchemaFieldProps = {
   schemaId: string;
-  schemaName: string;
   field?: IDynamicSchemaField;
   open: boolean;
   onClose: (e: any) => void;
@@ -49,7 +48,7 @@ type AddOrUpdateSchemaFieldProps = {
 const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
   props
 ) => {
-  const { schemaId, schemaName, field, open, onClose, onSuccess } = props;
+  const { schemaId, field, open, onClose, onSuccess } = props;
 
   const { formState, control, register, setError, watch, reset, handleSubmit } =
     useForm({
@@ -69,7 +68,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
   const { errors, isSubmitting } = formState;
 
   const fieldName = field ? field.name : _.camelCase(watch('title'));
-  const relatedFieldTo = _.camelCase(watch('relatedFieldTo'));
+  const relatedSchema = watch('relatedSchema');
 
   const fieldType = watch('type');
 
@@ -94,6 +93,11 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
         payload.id = field.id;
       } else {
         payload.name = fieldName;
+      }
+
+      if (fieldType === 'related') {
+        payload.relatedSchema = relatedSchema;
+        payload.relationType = relationType;
       }
 
       const res = await api.request(
@@ -123,7 +127,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
   };
 
   const renderDefaultFieldOption = () => {
-    if (fieldType === 'relationship') return null;
+    if (fieldType === 'related') return null;
     return (
       <div className="py-2">
         <TextField
@@ -140,46 +144,30 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
   };
 
   const renderRelationDescription = () => {
-    if (!relationFieldType) return null;
+    if (!relationFieldType || !schemasOptions.length) return null;
 
-    if (relationFieldType.twoWay) {
-      return (
-        <div className="py-2">
-          <div className="flex items-center gap-2">
-            <Typography component={'span'}>{fieldName}</Typography>
-            <Typography component={'span'} color="primary">
-              {relationFieldType.label}
-            </Typography>
-            {relationFieldType.twoWay && (
-              <Typography component={'span'}>{relatedFieldTo}</Typography>
-            )}
-          </div>
-        </div>
-      );
-    }
+    const rSchema = schemasOptions.find((s) => s.id === relatedSchema);
 
     return (
       <div className="py-2">
         <div className="flex items-center gap-2">
-          <Typography component={'span'}>{schemaName}</Typography>
+          <Typography component={'span'}>{fieldName}</Typography>
           <Typography component={'span'} color="primary">
             {relationFieldType.label}
           </Typography>
-          <Typography component={'span'}>
-            {schemasOptions?.[watch('relatedSchemaName')]?.title}
-          </Typography>
+          <Typography component={'span'}>{rSchema?.title}</Typography>
         </div>
       </div>
     );
   };
 
   const renderRelationFieldOption = () => {
-    if (fieldType !== 'relationship') return null;
+    if (fieldType !== 'related') return null;
 
     return (
       <>
         <div className="py-2">
-          <ButtonGroup>
+          <ButtonGroup disabled={Boolean(field)}>
             {relationshipItems.map((relType, i) => {
               return (
                 <Button
@@ -202,20 +190,30 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
         <div className="py-2">
           <Controller
             control={control}
-            name="relatedSchemaName"
+            name="relatedSchema"
             rules={{
               required: 'Please provided the related schema name',
             }}
             render={({ field: { value, onChange, ref } }) => {
               return (
                 <Autocomplete
+                  disabled={Boolean(field)}
+                  defaultValue={
+                    field && typeof field === 'object'
+                      ? field.relatedSchema
+                      : undefined
+                  }
                   options={schemasOptions}
-                  getOptionLabel={(item) => item.title}
+                  getOptionLabel={(item) => item.title || item}
                   inputValue={schemaSearch}
                   onInputChange={handleSchemasInputChange}
                   value={value}
                   onChange={(event, newValue) => {
-                    onChange(newValue);
+                    if (newValue && typeof newValue === 'object') {
+                      onChange(newValue.name);
+                    } else {
+                      onChange(newValue);
+                    }
                   }}
                   renderInput={(params) => {
                     return (
@@ -224,12 +222,11 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
                         variant="filled"
                         label="Related to"
                         helperText={
-                          errors.relatedSchemaName
-                            ? (errors.relatedSchemaName
-                                .message as React.ReactNode)
+                          errors.relatedSchema
+                            ? (errors.relatedSchema.message as React.ReactNode)
                             : ''
                         }
-                        error={Boolean(errors.relatedSchemaName)}
+                        error={Boolean(errors.relatedSchema)}
                       />
                     );
                   }}
@@ -238,29 +235,6 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
             }}
           />
         </div>
-        {relationFieldType && relationFieldType.twoWay && (
-          <div className="py-2">
-            <TextField
-              variant="filled"
-              fullWidth
-              label="Related field"
-              placeholder="Related to"
-              {...register('relatedFieldTo', {
-                required: 'Please provide the related field',
-                maxLength: {
-                  value: 200,
-                  message: 'Field title is too big',
-                },
-              })}
-              helperText={
-                errors.relatedFieldTo
-                  ? (errors.relatedFieldTo.message as React.ReactNode)
-                  : ''
-              }
-              error={Boolean(errors.relatedFieldTo)}
-            />
-          </div>
-        )}
         {renderRelationDescription()}
       </>
     );

@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import cx from 'classnames';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
@@ -59,6 +60,37 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
     });
 
   const { errors, isSubmitting } = formState;
+
+  const [optionsSearch, setOptionsSearch] = useState({});
+  const [optionsByRefName, setOptionsByRefName] = useState({});
+
+  console.log(`optionsSearch->`, optionsSearch);
+  console.log(`optionsByRefName->`, optionsByRefName);
+
+  const handleSchemasInputChange =
+    (field: IDynamicSchemaField) => (e: any, value: string) => {
+      const newSearch = { ...optionsSearch };
+      newSearch[field.name] = value;
+      setOptionsSearch(newSearch);
+
+      _.debounce(async () => {
+        const res = await api.request(
+          `/api/schemas/${schemaName}/details`,
+          'POST',
+          {
+            limit: 100,
+            skip: 0,
+            query: value,
+          }
+        );
+        const data = await res.json();
+        if (data) {
+          const newOptions = { ...optionsByRefName };
+          newOptions[field.name] = data.items;
+          setOptionsByRefName(newOptions);
+        }
+      }, 250)();
+    };
 
   const handleAddOrUpdateItem: SubmitHandler<any> = async (values) => {
     try {
@@ -121,6 +153,7 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
       <TextField
         id="field-type"
         label={field.title}
+        required={field.required}
         variant="filled"
         select
         SelectProps={{
@@ -145,6 +178,56 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
           );
         })}
       </TextField>
+    );
+  };
+
+  const renderRelatedFieldInput = (field: IDynamicSchemaField) => {
+    return (
+      <div>
+        <Controller
+          control={control}
+          name={field.name}
+          rules={{
+            required: field.required
+              ? `Please provide ${field.title}`
+              : undefined,
+          }}
+          render={({ field: { value, onChange, ref } }) => {
+            return (
+              <Autocomplete
+                options={optionsByRefName[field.name] || []}
+                getOptionLabel={(item) => JSON.stringify(item)}
+                inputValue={optionsSearch[field.name] || ''}
+                onInputChange={handleSchemasInputChange(field)}
+                value={value}
+                onChange={(event, newValue) => {
+                  if (newValue && typeof newValue === 'object') {
+                    onChange(newValue.id);
+                  } else {
+                    onChange(newValue);
+                  }
+                }}
+                renderInput={(params) => {
+                  return (
+                    <TextField
+                      {...params}
+                      variant="filled"
+                      label={field.title}
+                      required={field.required}
+                      helperText={
+                        errors[field.name]
+                          ? (errors[field.name].message as React.ReactNode)
+                          : ''
+                      }
+                      error={Boolean(errors[field.name])}
+                    />
+                  );
+                }}
+              />
+            );
+          }}
+        />
+      </div>
     );
   };
 
@@ -214,6 +297,10 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
       case 'list': {
         return renderDropdownFieldInput(field);
       }
+      case 'related': {
+        return renderRelatedFieldInput(field);
+      }
+
       case 'text':
       case 'multi-text':
       default: {

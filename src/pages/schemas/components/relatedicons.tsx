@@ -19,22 +19,21 @@ type RelatedIconsProps = {
 
 export const relationshipItems: {
   label: string;
-  twoWay?: boolean;
   type: RelationTypes;
 }[] = [
   { label: 'has one', type: 'hasOne' },
-  {
-    label: 'has and belongs to one',
-    twoWay: true,
-    type: 'fieldHasOneAndBelongsToOne',
-  },
-  { label: 'belongs to many', twoWay: true, type: 'belongsToMany' },
-  { label: 'has many', twoWay: true, type: 'fieldHasMany' },
-  {
-    label: 'has and belongs to many',
-    twoWay: true,
-    type: 'hasAndBelongsToMany',
-  },
+  // {
+  //   label: 'has and belongs to one',
+  //   twoWay: true,
+  //   type: 'fieldHasOneAndBelongsToOne',
+  // },
+  // { label: 'belongs to many', twoWay: true, type: 'belongsToMany' },
+  // { label: 'has many', twoWay: true, type: 'fieldHasMany' },
+  // {
+  //   label: 'has and belongs to many',
+  //   twoWay: true,
+  //   type: 'hasAndBelongsToMany',
+  // },
   { label: 'has many', type: 'hasMany' },
 ];
 

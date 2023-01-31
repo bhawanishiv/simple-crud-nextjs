@@ -5,7 +5,7 @@ import { z, ZodError } from 'zod';
 
 import mongoClient from '@/lib/mongo';
 import DynamicSchemaField from '@/models/DynamicSchemaField';
-import { FieldTypeEnum } from '@/interfaces/DynamicSchema';
+import { FieldTypeEnum, RelatedTypeEnum } from '@/interfaces/DynamicSchema';
 import DynamicSchema from '@/models/DynamicSchema';
 
 const CreateDynamicFieldSchema = z.object({
@@ -14,6 +14,8 @@ const CreateDynamicFieldSchema = z.object({
   type: FieldTypeEnum,
   unique: z.boolean().optional(),
   required: z.boolean().optional(),
+  relatedSchema: z.string().optional(),
+  relationType: RelatedTypeEnum.optional(),
   default: z
     .union([
       z.string().trim(),
@@ -67,6 +69,8 @@ const getSchemaAndFields = async (
         required: 1,
         unique: 1,
         default: 1,
+        relationType: 1,
+        relatedSchema: 1,
       }
     ).exec();
 
@@ -104,7 +108,7 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
           schema: schemaId,
         },
       ],
-    });
+    }).exec();
 
     if (fieldNameExists) {
       return res.status(400).json({ message: 'Field name already exists' });
@@ -123,6 +127,7 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
       field: { ...rest, id: _id.toString() },
     });
   } catch (e) {
+    console.log(`e->`, e);
     if (e instanceof ZodError) {
       return res.status(400).json(e.errors[0]);
     }

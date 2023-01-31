@@ -67,6 +67,8 @@ const createItem = async (req: NextApiRequest, res: NextApiResponse) => {
         required: 1,
         unique: 1,
         default: 1,
+        relationType: 1,
+        relatedSchema: 1,
       }
     ).exec();
 
@@ -127,6 +129,8 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
         required: 1,
         unique: 1,
         default: 1,
+        relationType: 1,
+        relatedSchema: 1,
       }
     ).exec();
 
@@ -197,6 +201,8 @@ const deleteItem = async (req: NextApiRequest, res: NextApiResponse) => {
         required: 1,
         unique: 1,
         default: 1,
+        relationType: 1,
+        relatedSchema: 1,
       }
     ).exec();
 

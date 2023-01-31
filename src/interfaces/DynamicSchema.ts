@@ -15,9 +15,13 @@ export const FieldTypeEnum = z.enum([
   'multi-text',
   'list',
   'date',
+  'related',
 ]);
 
 export type IDynamicSchemaFieldType = z.infer<typeof FieldTypeEnum>;
+
+export const RelatedTypeEnum = z.enum(['hasOne', 'hasMany']);
+export type IDynamicSchemaRelationType = z.infer<typeof RelatedTypeEnum>;
 
 export interface IDynamicSchemaField {
   id: string;
@@ -28,4 +32,6 @@ export interface IDynamicSchemaField {
   unique?: boolean;
   required?: boolean;
   default?: any;
+  relatedSchema?: string;
+  relationType?: IDynamicSchemaRelationType;
 }

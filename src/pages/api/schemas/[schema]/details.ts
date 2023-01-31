@@ -8,7 +8,11 @@ import { getDynamicSchema } from '@/lib/dynamic-schema';
 import DynamicSchemaField from '@/models/DynamicSchemaField';
 import DynamicSchema from '@/models/DynamicSchema';
 
-import { FieldTypeEnum, IDynamicSchemaField } from '@/interfaces/DynamicSchema';
+import {
+  FieldTypeEnum,
+  RelatedTypeEnum,
+  IDynamicSchemaField,
+} from '@/interfaces/DynamicSchema';
 
 const SchemaFieldsSchema = z.object({
   fields: z
@@ -28,6 +32,8 @@ const SchemaFieldsSchema = z.object({
             z.array(z.string().trim()),
           ])
           .optional(),
+        relatedSchema: z.string().optional(),
+        relationType: RelatedTypeEnum.optional(),
       })
     )
     .optional(),
@@ -77,6 +83,8 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
           required: 1,
           unique: 1,
           default: 1,
+          relatedSchema: 1,
+          relationType: 1,
         }
       ).exec());
 
@@ -87,9 +95,18 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
       fields as IDynamicSchemaField[]
     );
 
-    const { limit, skip, sort } = params;
+    const { limit, skip, sort, query } = params;
+    let filter = query
+      ? {
+          title: {
+            $regex: query,
+            $options: 'i',
+          },
+        }
+      : {};
+
     const items = await Model.aggregate([
-      { $match: {} },
+      { $match: filter },
       { $limit: limit },
       { $skip: skip },
       { $sort: { firstName: 1, ...sort } },
@@ -114,6 +131,7 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
 
     return res.json(response);
   } catch (e) {
+    console.log(`e->`, e);
     if (e instanceof ZodError) {
       return res.status(400).json(e.errors[0]);
     }

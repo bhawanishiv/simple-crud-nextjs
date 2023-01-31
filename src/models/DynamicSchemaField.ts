@@ -30,6 +30,12 @@ const dynamicSchemaFieldSchema = new Schema<IDynamicSchemaField>(
     default: {
       type: Schema.Types.Mixed,
     },
+    relatedSchema: {
+      type: String,
+    },
+    relationType: {
+      type: String,
+    },
   },
   {
     timestamps: {

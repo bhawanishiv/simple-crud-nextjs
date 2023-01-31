@@ -57,6 +57,30 @@ const fieldTypeMapper: { [key in IDynamicSchemaFieldType]: FieldMapperResult } =
   };
 
 const getFieldDef = (field: IDynamicSchemaField) => {
+  if (field.relatedSchema && field.relationType) {
+    if (field.relationType === 'hasMany') {
+      return [
+        {
+          type: Schema.Types.ObjectId,
+          ref: field.relatedSchema,
+          required: Boolean(field.required),
+          unique: Boolean(field.unique),
+          default:
+            typeof field.default === 'undefined' ? undefined : field.default,
+        },
+      ];
+    } else {
+      return {
+        type: Schema.Types.ObjectId,
+        ref: field.relatedSchema,
+        required: Boolean(field.required),
+        unique: Boolean(field.unique),
+        default:
+          typeof field.default === 'undefined' ? undefined : field.default,
+      };
+    }
+  }
+
   return {
     type: fieldTypeMapper[field.type],
     required: Boolean(field.required),
