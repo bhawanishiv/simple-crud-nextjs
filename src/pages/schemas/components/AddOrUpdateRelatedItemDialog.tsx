@@ -40,58 +40,6 @@ type AddOrUpdateRelatedItemDialogProps = {
   ) => void;
 };
 
-// const fetchReferencedItems = async (item: any) => {
-//   /**
-//    * { subscription:[id1,id1], user:uid }
-//    *
-//    *
-//    * [  { relatedSchema: 'User', relatedType: 'hasMany' }, { relatedSchema: 'User', relatedType: 'hasOne' }  ]
-//    */
-
-//   const reqs = {};
-
-//   for (let field of fields) {
-//     if (field.type === 'related') {
-//       if (!reqs[field.relatedSchema]) {
-//         reqs[field.relatedSchema] = [];
-//       }
-
-//       if (item[field.name]) {
-//         if (field.relationType === 'hasOne') {
-//           reqs[field.relatedSchema].push(item[field.name]);
-//         } else {
-//           reqs[field.relatedSchema] = [
-//             ...reqs[field.relatedSchema],
-//             ...item[field.name],
-//           ];
-//         }
-//       }
-//     }
-//   }
-
-//   const promises = [];
-//   const refs = [];
-//   for (let refItem in reqs) {
-//     refs.push(refItem);
-//     promises.push(
-//       api.request(`/api/schemas/${refItem}/details`, 'POST', {
-//         limit: reqs[refItem].length || 10,
-//         skip: 0,
-//         ids: reqs[refItem],
-//       })
-//     );
-//   }
-
-//   const promiseResults = await Promise.all(promises);
-//   let options = { ...optionsByRefName };
-//   for (let i = 0; i < promises.length; i++) {
-//     const data = await promiseResults[i].json();
-//     options[refs[i]] = data.items;
-//   }
-
-//   setOptionsByRefName(options);
-// };
-
 const LIMIT = 100;
 
 const AddOrUpdateRelatedItemDialog: React.FC<
@@ -127,7 +75,7 @@ const AddOrUpdateRelatedItemDialog: React.FC<
     if (ids.length) {
       promises.push(
         api.request(`/api/schemas/${field.relatedSchema}/details`, 'POST', {
-          limit: ids.length || 0,
+          limit: ids.length || 10,
           skip: 0,
           ids,
         })

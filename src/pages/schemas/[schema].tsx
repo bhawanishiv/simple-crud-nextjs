@@ -72,7 +72,7 @@ const getReferencedItems = async (data: any) => {
   for (let schema in ids) {
     promises.push(
       api.request(`/api/schemas/${schema}/details`, 'POST', {
-        limit: ids[schema].length || 0,
+        limit: ids[schema].length || 10,
         skip: 0,
         ids: ids[schema],
       })
