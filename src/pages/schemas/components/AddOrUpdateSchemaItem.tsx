@@ -2,7 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import cx from 'classnames';
 
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import {
+  Controller,
+  SubmitHandler,
+  useForm,
+  useFieldArray,
+} from 'react-hook-form';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -19,12 +24,14 @@ import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Chip from '@mui/material/Chip';
+import { Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 import api from '@/services/api';
 import { IDynamicSchemaField } from '@/interfaces/DynamicSchema';
-import { Typography } from '@mui/material';
+
+import AddOrUpdateRelatedItemDialog from './AddOrUpdateRelatedItemDialog';
 
 const getRoles = () => {
   return [
@@ -47,7 +54,7 @@ type AddOrUpdateSchemaItemProps = {
   item?: any;
   open: boolean;
   onClose: (e: any) => void;
-  onSuccess: (data: any) => void | Promise<void>;
+  onSuccess: (data?: any) => void | Promise<void>;
 };
 
 const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
@@ -61,48 +68,87 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
 
   const { errors, isSubmitting } = formState;
 
-  const [optionsSearch, setOptionsSearch] = useState({});
-  const [optionsByRefName, setOptionsByRefName] = useState({});
+  const [relatedField, setRelatedField] = useState<null | IDynamicSchemaField>(
+    null
+  );
+  const [localRefItems, setLocalRefItems] = useState({});
 
-  console.log(`optionsSearch->`, optionsSearch);
-  console.log(`optionsByRefName->`, optionsByRefName);
+  const handleUpdatedRelatedField = (field: IDynamicSchemaField) => () => {
+    setRelatedField(field);
+  };
 
-  const handleSchemasInputChange =
-    (field: IDynamicSchemaField) => (e: any, value: string) => {
-      const newSearch = { ...optionsSearch };
-      newSearch[field.name] = value;
-      setOptionsSearch(newSearch);
+  const setLocalRefValues = (currentItem: any) => {
+    let itemsObj = {};
 
-      _.debounce(async () => {
-        const res = await api.request(
-          `/api/schemas/${schemaName}/details`,
-          'POST',
-          {
-            limit: 100,
-            skip: 0,
-            query: value,
-          }
-        );
-        const data = await res.json();
-        if (data) {
-          const newOptions = { ...optionsByRefName };
-          newOptions[field.name] = data.items;
-          setOptionsByRefName(newOptions);
-        }
-      }, 250)();
+    for (let field of fields.filter((f) => f.type === 'related')) {
+      itemsObj[field.name] = currentItem[field.name];
+    }
+
+    setLocalRefItems(itemsObj);
+  };
+
+  const handleRelatedFieldUpdateSuccess = (
+    field: IDynamicSchemaField,
+    data: null | string | string[]
+  ) => {
+    // onSuccess();
+    let newLocalRefItems = {
+      ...localRefItems,
     };
+
+    newLocalRefItems[field.name] = data;
+    setLocalRefItems(newLocalRefItems);
+    setRelatedField(null);
+  };
+
+  const handleRelatedDialogClose = () => {
+    setRelatedField(null);
+  };
+
+  const getRefItemCount = (field: IDynamicSchemaField) => {
+    if (field.relationType == 'hasOne') {
+      return localRefItems[field.name] ? ' (1)' : '';
+    }
+
+    const content = localRefItems[field.name];
+    if (!content || !content.length) return '';
+
+    return ` (${content.length})`;
+  };
 
   const handleAddOrUpdateItem: SubmitHandler<any> = async (values) => {
     try {
-      const payload = {
+      let payload = {
         ...values,
       };
-
-      console.log(`payload->`, payload);
 
       if (item) {
         payload.id = item.id;
       }
+
+      const anyPendingRefItemLeft = fields.filter((f) => {
+        if (f.type === 'related' && f.required) {
+          if (!localRefItems[f.name]) return true;
+
+          if (f.relationType === 'hasMany') {
+            return localRefItems[f.name].length === 0;
+          }
+          return false;
+        }
+        return false;
+      });
+      if (anyPendingRefItemLeft.length) {
+        setError(fields[0].name, {
+          type: 'custom',
+          message: `${anyPendingRefItemLeft[0].title} isn't provided`,
+        });
+        return;
+      }
+
+      payload = {
+        ...payload,
+        ...localRefItems,
+      };
 
       const res = await api.request(
         `/api/schemas/${schemaId}`,
@@ -181,56 +227,6 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
     );
   };
 
-  const renderRelatedFieldInput = (field: IDynamicSchemaField) => {
-    return (
-      <div>
-        <Controller
-          control={control}
-          name={field.name}
-          rules={{
-            required: field.required
-              ? `Please provide ${field.title}`
-              : undefined,
-          }}
-          render={({ field: { value, onChange, ref } }) => {
-            return (
-              <Autocomplete
-                options={optionsByRefName[field.name] || []}
-                getOptionLabel={(item) => JSON.stringify(item)}
-                inputValue={optionsSearch[field.name] || ''}
-                onInputChange={handleSchemasInputChange(field)}
-                value={value}
-                onChange={(event, newValue) => {
-                  if (newValue && typeof newValue === 'object') {
-                    onChange(newValue.id);
-                  } else {
-                    onChange(newValue);
-                  }
-                }}
-                renderInput={(params) => {
-                  return (
-                    <TextField
-                      {...params}
-                      variant="filled"
-                      label={field.title}
-                      required={field.required}
-                      helperText={
-                        errors[field.name]
-                          ? (errors[field.name].message as React.ReactNode)
-                          : ''
-                      }
-                      error={Boolean(errors[field.name])}
-                    />
-                  );
-                }}
-              />
-            );
-          }}
-        />
-      </div>
-    );
-  };
-
   const renderFormField = (field: IDynamicSchemaField, index: number) => {
     switch (field.type) {
       case 'number': {
@@ -298,7 +294,15 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
         return renderDropdownFieldInput(field);
       }
       case 'related': {
-        return renderRelatedFieldInput(field);
+        return (
+          <div>
+            <Button onClick={handleUpdatedRelatedField(field)}>
+              {item ? 'Update' : 'Set'} {field.title}{' '}
+              {field.required ? '*' : ''}
+              {getRefItemCount(field)}
+            </Button>
+          </div>
+        );
       }
 
       case 'text':
@@ -341,28 +345,43 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
 
   const renderAddOrUpdateSchemaItem = () => {
     return (
-      <Drawer anchor="right" open={open} onClose={handleClose}>
-        <form
-          noValidate
-          className="p-6"
-          onSubmit={handleSubmit(handleAddOrUpdateItem)}
-        >
-          <div className="flex flex-col flex-1">
-            <div>
-              <Typography>
-                {item ? 'Update ' : 'Add a '}
-                {_.lowerCase(schemaName)}
-              </Typography>
+      <>
+        <AddOrUpdateRelatedItemDialog
+          schemaId={schemaId}
+          open={Boolean(relatedField)}
+          currentItem={item && relatedField ? localRefItems : undefined}
+          field={relatedField}
+          onClose={handleRelatedDialogClose}
+          onSuccess={handleRelatedFieldUpdateSuccess}
+        />
+        <Drawer anchor="right" open={open} onClose={handleClose}>
+          <form
+            noValidate
+            className="p-6"
+            onSubmit={handleSubmit(handleAddOrUpdateItem)}
+          >
+            <div className="flex flex-col flex-1">
+              <div>
+                <Typography>
+                  {item ? 'Update ' : 'Add a '}
+                  {_.lowerCase(schemaName)}
+                </Typography>
+              </div>
+              {renderFormFields()}
             </div>
-            {renderFormFields()}
-          </div>
-          <div className="flex items-center py-2">
-            <Button variant="outlined" type="submit" disableElevation fullWidth>
-              Save
-            </Button>
-          </div>
-        </form>
-      </Drawer>
+            <div className="flex items-center py-2">
+              <Button
+                variant="outlined"
+                type="submit"
+                disableElevation
+                fullWidth
+              >
+                Save
+              </Button>
+            </div>
+          </form>
+        </Drawer>
+      </>
     );
   };
 
@@ -372,8 +391,10 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
       reset({
         ...restItem,
       });
+      setLocalRefValues(restItem);
     } else {
       reset({});
+      setLocalRefItems({});
     }
   }, [item, open]);
 

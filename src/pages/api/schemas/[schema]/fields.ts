@@ -19,6 +19,7 @@ const CreateDynamicFieldSchema = z.object({
   default: z
     .union([
       z.string().trim(),
+      z.null(),
       z.boolean(),
       z.number(),
       z.array(z.string().trim()),
@@ -127,7 +128,6 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
       field: { ...rest, id: _id.toString() },
     });
   } catch (e) {
-    console.log(`e->`, e);
     if (e instanceof ZodError) {
       return res.status(400).json(e.errors[0]);
     }

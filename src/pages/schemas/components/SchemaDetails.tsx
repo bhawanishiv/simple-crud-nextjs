@@ -74,6 +74,16 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
                 <div className="flex items-center gap-2">
                   <Typography>{field.title}</Typography>
                   <Typography color="primary">{field.type}</Typography>
+                  {field.type === 'related' && (
+                    <>
+                      <Typography className="text-sm">
+                        {field.relationType}
+                      </Typography>
+                      <Typography className="text-sm" color="primary">
+                        {field.relatedSchema}
+                      </Typography>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

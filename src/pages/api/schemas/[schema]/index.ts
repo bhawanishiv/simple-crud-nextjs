@@ -1,7 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
-import _ from 'lodash';
+import mongoose from 'mongoose';
 import { Schema, z, ZodError } from 'zod';
+import _ from 'lodash';
 
 import mongoClient from '@/lib/mongo';
 import { getDynamicSchema } from '@/lib/dynamic-schema';
@@ -20,9 +21,30 @@ const getFieldSchema = (field: IDynamicSchemaField) => {
     case 'multi-text':
     case 'list': {
       if (!field.required) {
-        z.string().trim().optional();
+        return z.string().trim().optional();
       }
       return z.string().trim();
+    }
+    case 'related': {
+      let schema;
+      if (field.relationType === 'hasMany') {
+        schema = z.array(
+          z
+            .string()
+            .trim()
+            .transform((v) => new mongoose.Types.ObjectId(v))
+        );
+      } else {
+        schema = z
+          .string()
+          .trim()
+          .nullable()
+          .transform((v) => (v ? new mongoose.Types.ObjectId(v) : v));
+      }
+
+      if (!field.required) {
+        return schema.optional();
+      }
     }
     default:
       return z.any();
@@ -152,6 +174,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
         returnDocument: 'after',
       }
     ).exec();
+
     if (!item) {
       throw new Error("Couldn't find the item");
     }

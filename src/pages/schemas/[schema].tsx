@@ -30,7 +30,7 @@ import {
 import AddOrUpdateSchemaItem from './components/AddOrUpdateSchemaItem';
 import DeleteItemDialog from './components/DeleteItemDialog';
 
-const LIMIT = 10;
+const LIMIT = 100;
 
 const getSchemaItems = async (name: string, index: number) => {
   const res = await api.request(`/api/schemas/${name}/details`, 'POST', {
@@ -39,6 +39,67 @@ const getSchemaItems = async (name: string, index: number) => {
   });
   const data = await res.json();
   return data;
+};
+
+const getReferencedItems = async (data: any) => {
+  if (!data) return null;
+
+  const { fields, items } = data;
+
+  let ids = {};
+
+  for (let item of items) {
+    for (let field of fields.filter((f) => f.type === 'related')) {
+      if (!ids[field.relatedSchema]) ids[field.relatedSchema] = [];
+
+      if (item[field.name]) {
+        if (field.relationType === 'hasOne') {
+          ids[field.relatedSchema].push(item[field.name]);
+        } else {
+          ids = {
+            ...ids,
+            [field.relatedSchema]: [
+              ...ids[field.relatedSchema],
+              ...item[field.name],
+            ],
+          };
+        }
+      }
+    }
+  }
+
+  const promises = [];
+  for (let schema in ids) {
+    promises.push(
+      api.request(`/api/schemas/${schema}/details`, 'POST', {
+        limit: ids[schema].length || 0,
+        skip: 0,
+        ids: ids[schema],
+      })
+    );
+  }
+
+  const results = await Promise.all(promises);
+
+  const responses = {};
+
+  const schemas = Object.keys(ids);
+
+  for (let i = 0; i < schemas.length; i++) {
+    const res = await results[i].json();
+    const itemsObj = {};
+    if (res) {
+      for (let resItem of res.items) {
+        itemsObj[resItem.id] = resItem;
+      }
+    }
+    responses[schemas[i]] = {
+      itemsObj,
+      ...res,
+    };
+  }
+
+  return responses;
 };
 
 type SchemaPageProps = {};
@@ -58,13 +119,21 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
     (index) => getSchemaItems(router.query.schema as string, +index)
   );
 
+  const isLoadingInitialData = !data && !error;
+
   const [addOrUpdateItem, setAddOrUpdateItem] = useState<any | boolean>(false);
   const [deleteItem, setDeleteItem] = useState<any | boolean>(false);
 
-  console.log(`data->`, data);
-  // const items = data ? [].concat(...data) : [];
+  const {
+    data: relatedDocs,
+    mutate: mutateRefItems,
+    isLoading,
+  } = useSwr(
+    isLoadingInitialData ? null : 'getReferencedItems',
+    async () => await getReferencedItems(data ? data[0] : null)
+  );
 
-  const isLoadingInitialData = !data && !error;
+  // const items = data ? [].concat(...data) : [];
 
   // const isLoadingMore =
   //   isLoadingInitialData ||
@@ -100,12 +169,45 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
   };
 
   const handleAddOrUpdateSuccess = () => {
-    mutate();
+    mutate().then(mutateRefItems);
     setAddOrUpdateItem(false);
   };
 
+  const getRefFieldsLabel = (item: any) => {
+    return Object.keys(item).filter(
+      (f) =>
+        f !== 'id' &&
+        f !== '_id' &&
+        f !== 'updatedAt' &&
+        f !== 'createdAt' &&
+        f !== '__v'
+    );
+  };
+
+  const renderReferencedItem = (field: IDynamicSchemaField, item: any) => {
+    const itemsObj = relatedDocs[field.relatedSchema];
+    if (!itemsObj || !item[field.name]) return null;
+
+    if (field.relationType === 'hasMany') {
+      if (!item[field.name].length) return null;
+      return item[field.name]
+        .filter((i: any) => itemsObj.itemsObj[i])
+        .map((i: any) => {
+          const _item = itemsObj.itemsObj[i];
+          const _fields = getRefFieldsLabel(_item);
+          return _item[_fields[0]];
+        })
+        .join(', ');
+    }
+
+    const _item = itemsObj.itemsObj[item[field.name]];
+    if (!_item) return null;
+    const _fields = getRefFieldsLabel(_item);
+    return _item[_fields[0]];
+  };
+
   const renderSchemaPage = () => {
-    if (isLoadingInitialData) {
+    if (isLoadingInitialData || isLoading) {
       return (
         <div>
           <CircularProgress />
@@ -160,7 +262,10 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
                   <TableRow>
                     {fields.map((field: IDynamicSchemaField) => {
                       return (
-                        <TableCell key={field.id}>{field.title}</TableCell>
+                        <TableCell key={field.id}>
+                          {field.title}
+                          {field.type === 'related' ? ' (ref)' : ''}
+                        </TableCell>
                       );
                     })}
                     <TableCell>Actions</TableCell>
@@ -175,7 +280,9 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
                       {fields.map((field: IDynamicSchemaField) => {
                         return (
                           <TableCell key={field.id}>
-                            {item?.[field.name]}
+                            {field.type === 'related'
+                              ? renderReferencedItem(field, item)
+                              : item?.[field.name]}
                           </TableCell>
                         );
                       })}

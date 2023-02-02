@@ -1,5 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
+import mongoose from 'mongoose';
 import _ from 'lodash';
 import { z, ZodError } from 'zod';
 
@@ -41,6 +42,9 @@ const SchemaFieldsSchema = z.object({
   skip: z.number().nonnegative(),
   sort: z.record(z.string().trim(), z.number()).optional(),
   query: z.string().trim().optional(),
+  ids: z
+    .array(z.string().transform((v) => new mongoose.Types.ObjectId(v)))
+    .optional(),
 });
 
 type Data = {
@@ -95,7 +99,7 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
       fields as IDynamicSchemaField[]
     );
 
-    const { limit, skip, sort, query } = params;
+    const { ids, limit, skip, sort, query } = params;
     let filter = query
       ? {
           title: {
@@ -105,20 +109,36 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
         }
       : {};
 
-    const items = await Model.aggregate([
-      { $match: filter },
+    let filterByIds = {};
+    if (ids && ids.length) {
+      filterByIds = {
+        _id: {
+          $in: ids,
+        },
+      };
+    }
+
+    const qry = [
+      {
+        $match: {
+          ...filter,
+          ...filterByIds,
+        },
+      },
       { $limit: limit },
       { $skip: skip },
-      { $sort: { firstName: 1, ...sort } },
+      { $sort: { createdAt: -1, ...sort } },
       {
         $addFields: {
           id: '$_id',
         },
       },
-    ]).exec();
+    ];
+
+    const items = await Model.aggregate(qry).exec();
 
     const count = await Model.aggregate([
-      { $match: {} },
+      { $match: { ...filter, ...filterByIds } },
       { $count: 'count' },
     ]).exec();
 
@@ -131,7 +151,6 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
 
     return res.json(response);
   } catch (e) {
-    console.log(`e->`, e);
     if (e instanceof ZodError) {
       return res.status(400).json(e.errors[0]);
     }

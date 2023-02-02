@@ -98,6 +98,9 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
       if (fieldType === 'related') {
         payload.relatedSchema = relatedSchema;
         payload.relationType = relationType;
+        if (!payload.default) {
+          payload.default = null;
+        }
       }
 
       const res = await api.request(
