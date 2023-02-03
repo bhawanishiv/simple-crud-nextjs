@@ -47,6 +47,7 @@ const AddOrUpdateUserDialog: React.FC<AddOrUpdateUserDialogProps> = (props) => {
         }
       }
       await onSuccess(resData);
+      reset({ firstName: '', lastName: '', email: '', role: 'USER' });
     } catch (e) {
       // console.log(`e->`, e);
     }
