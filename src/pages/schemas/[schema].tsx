@@ -46,10 +46,12 @@ const getReferencedItems = async (data: any) => {
 
   const { fields, items } = data;
 
-  let ids = {};
+  let ids: { [key: string]: string[] } = {};
 
   for (let item of items) {
-    for (let field of fields.filter((f) => f.type === 'related')) {
+    for (let field of fields.filter(
+      (f: IDynamicSchemaField) => f.type === 'related'
+    )) {
       if (!ids[field.relatedSchema]) ids[field.relatedSchema] = [];
 
       if (item[field.name]) {
@@ -81,13 +83,13 @@ const getReferencedItems = async (data: any) => {
 
   const results = await Promise.all(promises);
 
-  const responses = {};
+  const responses: { [key: string]: any } = {};
 
   const schemas = Object.keys(ids);
 
   for (let i = 0; i < schemas.length; i++) {
     const res = await results[i].json();
-    const itemsObj = {};
+    const itemsObj: { [key: string]: any } = {};
     if (res) {
       for (let resItem of res.items) {
         itemsObj[resItem.id] = resItem;
@@ -186,6 +188,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
   };
 
   const renderReferencedItem = (field: IDynamicSchemaField, item: any) => {
+    if (!relatedDocs || !field.relatedSchema) return null;
     const itemsObj = relatedDocs[field.relatedSchema];
     if (!itemsObj || !item[field.name]) return null;
 

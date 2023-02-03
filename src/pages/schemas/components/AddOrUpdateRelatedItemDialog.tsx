@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import cx from 'classnames';
 
 import Typography from '@mui/material/Typography';
@@ -6,9 +6,7 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import CircularProgress from '@mui/material/CircularProgress';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -30,7 +28,7 @@ import {
 
 type AddOrUpdateRelatedItemDialogProps = {
   schemaId: string;
-  field?: IDynamicSchemaField;
+  field: null | IDynamicSchemaField;
   open: boolean;
   currentItem?: any | any[];
   onClose: (item?: any) => void;
@@ -51,56 +49,59 @@ const AddOrUpdateRelatedItemDialog: React.FC<
   const [schema, setSchema] = useState<null | IDynamicSchema>(null);
   const [items, setItems] = useState([]);
   const [fields, setFields] = useState<IDynamicSchemaField[]>([]);
-  const [selectedItems, setSelectedItems] = useState<readonly string[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const fetchSchemaDetails = async (field: IDynamicSchemaField) => {
-    const promises = [];
-    promises.push(
-      api.request(`/api/schemas/${field.relatedSchema}/details`, 'POST', {
-        limit: LIMIT,
-        skip: 0,
-      })
-    );
-
-    let ids = [];
-
-    if (currentItem && currentItem[field.name]) {
-      if (field.relationType === 'hasOne') {
-        ids.push(currentItem[field.name]);
-      } else {
-        ids = [...currentItem[field.name]];
-      }
-    }
-
-    if (ids.length) {
+  const fetchSchemaDetails = useCallback(
+    async (field: IDynamicSchemaField) => {
+      const promises = [];
       promises.push(
         api.request(`/api/schemas/${field.relatedSchema}/details`, 'POST', {
-          limit: ids.length || 10,
+          limit: LIMIT,
           skip: 0,
-          ids,
         })
       );
-    }
 
-    const results = await Promise.all(promises);
+      let ids = [];
 
-    const [sourceItemsRes, selectedItemsRes] = results;
-    const sourceRes = await sourceItemsRes.json();
+      if (currentItem && currentItem[field.name]) {
+        if (field.relationType === 'hasOne') {
+          ids.push(currentItem[field.name]);
+        } else {
+          ids = [...currentItem[field.name]];
+        }
+      }
 
-    if (sourceItemsRes.ok) {
-      const { fields, items, count, schema } = sourceRes;
-      setSchema(schema);
-      setFields(fields);
-      setItems(items);
-      setCount(count);
-    }
+      if (ids.length) {
+        promises.push(
+          api.request(`/api/schemas/${field.relatedSchema}/details`, 'POST', {
+            limit: ids.length || 10,
+            skip: 0,
+            ids,
+          })
+        );
+      }
 
-    if (selectedItemsRes) {
-      const selectedRes = await selectedItemsRes.json();
-      const { items } = selectedRes;
-      setSelectedItems(items.map((i) => i.id));
-    }
-  };
+      const results = await Promise.all(promises);
+
+      const [sourceItemsRes, selectedItemsRes] = results;
+      const sourceRes = await sourceItemsRes.json();
+
+      if (sourceItemsRes.ok) {
+        const { fields, items, count, schema } = sourceRes;
+        setSchema(schema);
+        setFields(fields);
+        setItems(items);
+        setCount(count);
+      }
+
+      if (selectedItemsRes) {
+        const selectedRes = await selectedItemsRes.json();
+        const { items } = selectedRes;
+        setSelectedItems(items.map((i: any) => i.id));
+      }
+    },
+    [currentItem]
+  );
 
   const handleClose = () => {
     onClose();
@@ -108,6 +109,7 @@ const AddOrUpdateRelatedItemDialog: React.FC<
 
   const handleUpdate = async () => {
     try {
+      if (!field) return;
       const finalSelectedItems =
         field?.relationType === 'hasOne'
           ? selectedItems[0] || null
@@ -127,7 +129,7 @@ const AddOrUpdateRelatedItemDialog: React.FC<
     if (field?.relationType === 'hasOne') {
       setSelectedItems([item.id]);
     } else {
-      let newSelected: readonly string[] = [];
+      let newSelected: string[] = [];
 
       if (selectedIndex === -1) {
         newSelected = newSelected.concat(selectedItems, item.id as string);
@@ -261,7 +263,7 @@ const AddOrUpdateRelatedItemDialog: React.FC<
       setFields([]);
       setSelectedItems([]);
     }
-  }, [open, field]);
+  }, [open, field, fetchSchemaDetails]);
 
   return renderAddOrUpdateRelatedItemDialog();
 };

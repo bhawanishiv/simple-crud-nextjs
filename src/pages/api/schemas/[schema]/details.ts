@@ -118,7 +118,7 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
       };
     }
 
-    const qry = [
+    const items = await Model.aggregate([
       {
         $match: {
           ...filter,
@@ -133,9 +133,7 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
           id: '$_id',
         },
       },
-    ];
-
-    const items = await Model.aggregate(qry).exec();
+    ]).exec();
 
     const count = await Model.aggregate([
       { $match: { ...filter, ...filterByIds } },

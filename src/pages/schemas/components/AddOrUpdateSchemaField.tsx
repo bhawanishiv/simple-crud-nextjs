@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import _ from 'lodash';
-import cx from 'classnames';
 
 import { SubmitHandler, Controller, useForm } from 'react-hook-form';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -19,7 +17,7 @@ import Chip from '@mui/material/Chip';
 import { IDynamicSchemaField } from '@/interfaces/DynamicSchema';
 import api from '@/services/api';
 
-import { RelatedIcon, relationshipItems } from './relatedicons';
+import RelatedIcon, { relationshipItems } from './relatedicons';
 
 const fieldTypes = [
   { label: 'Text', value: 'text' },
@@ -347,7 +345,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
         unique: undefined,
       });
     }
-  }, [field, open]);
+  }, [field, reset, open]);
 
   return renderAddOrUpdateSchemaField();
 };

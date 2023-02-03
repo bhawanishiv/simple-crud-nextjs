@@ -1,26 +1,12 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import _ from 'lodash';
-import cx from 'classnames';
 
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
-import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
 import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Chip from '@mui/material/Chip';
-
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
 
 import { IDynamicSchema } from '@/interfaces/DynamicSchema';
 import api from '@/services/api';
@@ -129,7 +115,7 @@ const AddOrUpdateSchema: React.FC<AddOrUpdateSchemaProps> = (props) => {
         name: '',
       });
     }
-  }, [schema, open]);
+  }, [schema, reset, open]);
 
   return renderAddOrUpdateSchemaField();
 };

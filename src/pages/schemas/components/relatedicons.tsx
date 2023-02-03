@@ -151,8 +151,9 @@ const icons: IRelatedIcons = {
   ),
 };
 
-export const RelatedIcon: React.FC<RelatedIconsProps> = (props) => {
+const RelatedIcon: React.FC<RelatedIconsProps> = (props) => {
   const { name } = props;
 
   return icons[name];
 };
+export default RelatedIcon;

@@ -5,56 +5,18 @@ import {
   IDynamicSchemaFieldType,
 } from '@/interfaces/DynamicSchema';
 
-const fields: IDynamicSchemaField[] = [
-  {
-    schema: 'sdf',
-    type: 'text',
-    title: 'First Name',
-    name: 'firstName',
-    required: true,
-  },
-  {
-    schema: 'sdf',
-    type: 'text',
-    title: 'Last Name',
-    name: 'firstName',
-  },
-  {
-    schema: 'sdf',
-    type: 'text',
-    title: 'Username',
-    name: 'username',
-    unique: true,
-    required: true,
-  },
-  {
-    schema: 'sdf',
-    type: 'text',
-    title: 'Email',
-    name: 'email',
-    unique: true,
-    required: true,
-  },
-  {
-    schema: 'sdf',
-    type: 'list',
-    title: 'Role',
-    name: 'role',
-    default: 'USER',
-  },
-];
-
 type FieldMapperResult = any | ((field: IDynamicSchemaField) => any);
 
-const fieldTypeMapper: { [key in IDynamicSchemaFieldType]: FieldMapperResult } =
-  {
-    boolean: Boolean,
-    date: Date,
-    list: String,
-    number: Number,
-    text: String,
-    'multi-text': String,
-  };
+const fieldTypeMapper: {
+  [key in IDynamicSchemaFieldType]?: FieldMapperResult;
+} = {
+  boolean: Boolean,
+  date: Date,
+  list: String,
+  number: Number,
+  text: String,
+  'multi-text': String,
+};
 
 const getFieldDef = (field: IDynamicSchemaField) => {
   if (field.relatedSchema && field.relationType) {

@@ -1,32 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import _ from 'lodash';
 import cx from 'classnames';
 
-import {
-  Controller,
-  SubmitHandler,
-  useForm,
-  useFieldArray,
-} from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
-import Autocomplete from '@mui/material/Autocomplete';
-import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
-import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Chip from '@mui/material/Chip';
-import { Typography } from '@mui/material';
+import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-// import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 import api from '@/services/api';
 import { IDynamicSchemaField } from '@/interfaces/DynamicSchema';
@@ -68,31 +51,37 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
 
   const { errors, isSubmitting } = formState;
 
-  const [relatedField, setRelatedField] = useState<null | IDynamicSchemaField>(
+  const [relatedField, setRelatedField] = useState<IDynamicSchemaField | null>(
     null
   );
-  const [localRefItems, setLocalRefItems] = useState({});
+
+  const [localRefItems, setLocalRefItems] = useState<{ [key: string]: any }>(
+    {}
+  );
 
   const handleUpdatedRelatedField = (field: IDynamicSchemaField) => () => {
     setRelatedField(field);
   };
 
-  const setLocalRefValues = (currentItem: any) => {
-    let itemsObj = {};
+  const setLocalRefValues = useCallback(
+    (currentItem: any) => {
+      let itemsObj: { [key: string]: any } = {};
 
-    for (let field of fields.filter((f) => f.type === 'related')) {
-      itemsObj[field.name] = currentItem[field.name];
-    }
+      for (let field of fields.filter((f) => f.type === 'related')) {
+        itemsObj[field.name] = currentItem[field.name];
+      }
 
-    setLocalRefItems(itemsObj);
-  };
+      setLocalRefItems(itemsObj);
+    },
+    [fields]
+  );
 
   const handleRelatedFieldUpdateSuccess = (
     field: IDynamicSchemaField,
     data: null | string | string[]
   ) => {
     // onSuccess();
-    let newLocalRefItems = {
+    let newLocalRefItems: { [key: string]: any } = {
       ...localRefItems,
     };
 
@@ -396,7 +385,7 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
       reset({});
       setLocalRefItems({});
     }
-  }, [item, open]);
+  }, [item, reset, setLocalRefValues, open]);
 
   return renderAddOrUpdateSchemaItem();
 };
