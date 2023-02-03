@@ -3,6 +3,7 @@ import _ from 'lodash';
 
 import { SubmitHandler, Controller, useForm } from 'react-hook-form';
 
+import LoadingButton from '@mui/lab/LoadingButton';
 import Autocomplete from '@mui/material/Autocomplete';
 import Typography from '@mui/material/Typography';
 import Drawer from '@mui/material/Drawer';
@@ -377,9 +378,15 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
             {renderFieldOptions()}
           </div>
           <div className="flex items-center py-2">
-            <Button variant="outlined" type="submit" disableElevation fullWidth>
+            <LoadingButton
+              variant="outlined"
+              type="submit"
+              loading={isSubmitting}
+              disableElevation
+              fullWidth
+            >
               Save
-            </Button>
+            </LoadingButton>
           </div>
         </form>
       </Drawer>

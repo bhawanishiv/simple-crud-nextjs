@@ -4,6 +4,7 @@ import cx from 'classnames';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
+import LoadingButton from '@mui/lab/LoadingButton';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -341,14 +342,15 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
               {renderFormFields()}
             </div>
             <div className="flex items-center py-2">
-              <Button
+              <LoadingButton
                 variant="outlined"
                 type="submit"
                 disableElevation
                 fullWidth
+                loading={isSubmitting}
               >
                 Save
-              </Button>
+              </LoadingButton>
             </div>
           </form>
         </Drawer>
