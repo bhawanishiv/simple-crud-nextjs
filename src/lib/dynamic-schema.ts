@@ -12,13 +12,22 @@ const fieldTypeMapper: {
 } = {
   boolean: Boolean,
   date: Date,
-  list: String,
   number: Number,
   text: String,
   'multi-text': String,
 };
 
 const getFieldDef = (field: IDynamicSchemaField) => {
+  if (field.type === 'list') {
+    return {
+      type: String,
+      enum: field.options,
+      required: Boolean(field.required),
+      unique: Boolean(field.unique),
+      default: typeof field.default === 'undefined' ? undefined : field.default,
+    };
+  }
+
   if (field.relatedSchema && field.relationType) {
     if (field.relationType === 'hasMany') {
       return [

@@ -16,20 +16,6 @@ import { IDynamicSchemaField } from '@/interfaces/DynamicSchema';
 
 import AddOrUpdateRelatedItemDialog from './AddOrUpdateRelatedItemDialog';
 
-const getRoles = () => {
-  return [
-    { value: 'ADMIN', label: 'Admin' },
-    { value: 'MEMBER', label: 'Member' },
-  ];
-};
-
-type DropdownItems = {
-  [key: string]: () => { value: string; label: string }[];
-};
-const DROPDOWN_ITEMS: DropdownItems = {
-  role: getRoles,
-};
-
 type AddOrUpdateSchemaItemProps = {
   schemaName: string;
   schemaId: string;
@@ -165,13 +151,9 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
   };
 
   const renderDropdownFieldInput = (field: IDynamicSchemaField) => {
-    if (
-      !DROPDOWN_ITEMS[field.name] ||
-      typeof DROPDOWN_ITEMS[field.name] !== 'function'
-    )
-      return null;
+    if (!field.options) return null;
 
-    const items = DROPDOWN_ITEMS[field.name]();
+    const items = field.options;
     let defaultValue =
       item && typeof item[field.name] !== 'undefined'
         ? item[field.name]
@@ -205,10 +187,10 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
         }
         error={Boolean(errors[field.name])}
       >
-        {items.map((items) => {
+        {items.map((item) => {
           return (
-            <MenuItem key={items.value} value={items.value}>
-              {items.label}
+            <MenuItem key={item} value={item}>
+              {item}
             </MenuItem>
           );
         })}

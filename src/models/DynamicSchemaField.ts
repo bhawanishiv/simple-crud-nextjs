@@ -36,6 +36,11 @@ const dynamicSchemaFieldSchema = new Schema<IDynamicSchemaField>(
     relationType: {
       type: String,
     },
+    options: [
+      {
+        type: String,
+      },
+    ],
   },
   {
     timestamps: {

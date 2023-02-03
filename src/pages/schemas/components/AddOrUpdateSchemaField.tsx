@@ -75,6 +75,31 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
     }, 250)();
   };
 
+  const parseOptions = (optionsStr: string) => {
+    return optionsStr.trim().split('\n');
+  };
+
+  const validListOptions = (optionsStr: string) => {
+    try {
+      if (!optionsStr.trim()) throw new Error(`No options provided`);
+      const options = parseOptions(optionsStr);
+
+      const optionsObj: { [key: string]: number } = {};
+      for (let option of options) {
+        const optionStr = option.trim().toLowerCase();
+        if (optionsObj[optionStr])
+          throw new Error(`Duplicate option: "${optionStr}" added`);
+
+        optionsObj[optionStr] = 1;
+      }
+      return options;
+    } catch (e: any) {
+      setError('options', { type: 'custom', message: e.message });
+    }
+  };
+
+  const validListOptionsForm = _.debounce(validListOptions, 250);
+
   const handleAddOrUpdateField: SubmitHandler<any> = async (values) => {
     try {
       const payload = {
@@ -93,6 +118,13 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
         if (!payload.default) {
           payload.default = null;
         }
+      }
+
+      if (fieldType === 'list') {
+        const options = validListOptions(values.options);
+        payload.options = options;
+      } else {
+        delete payload.options;
       }
 
       const res = await api.request(
@@ -236,6 +268,35 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
     );
   };
 
+  const renderListTypeFieldOptions = () => {
+    console.log(`fieldType->`, fieldType);
+    if (fieldType !== 'list') return null;
+
+    return (
+      <div className="py-2">
+        <TextField
+          id="field-type"
+          label="Options"
+          multiline
+          minRows={3}
+          maxRows={10}
+          variant="filled"
+          {...register('options', {
+            required: 'Please profile list items',
+            validate: (v) => (validListOptionsForm(v) ? true : undefined),
+          })}
+          fullWidth
+          helperText={
+            errors.options
+              ? (errors.options.message as React.ReactNode)
+              : 'Add items per line'
+          }
+          error={Boolean(errors.options)}
+        />
+      </div>
+    );
+  };
+
   const renderFieldOptions = () => {
     return (
       <>
@@ -265,6 +326,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
             })}
           </TextField>
         </div>
+        {renderListTypeFieldOptions()}
         {renderDefaultFieldOption()}
         {renderRelationFieldOption()}
         <div className="">
@@ -326,13 +388,17 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
 
   useEffect(() => {
     if (open && field) {
-      reset({
+      const params: { [key: string]: any } = {
         title: field.title,
         type: field.type,
         default: field.default,
         required: field.required,
         unique: field.unique,
-      });
+      };
+      if (field.type === 'list' && field.options) {
+        params.options = field.options.join('\n');
+      }
+      reset(params);
       if (field.type === 'related' && field.relationType) {
         setRelationType(field.relationType);
       }
@@ -343,6 +409,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
         default: undefined,
         required: undefined,
         unique: undefined,
+        options: undefined,
       });
     }
   }, [field, reset, open]);
