@@ -32,8 +32,9 @@ const getSchemaFields = async (schemaId: string) => {
 const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
   const { schema } = props;
 
-  const { isLoading, data, mutate } = useSwr(`${schema.name}`, () =>
-    getSchemaFields(schema.name)
+  const { isLoading, isValidating, data, mutate } = useSwr(
+    `${schema.name}`,
+    () => getSchemaFields(schema.name)
   );
 
   const [currentField, setCurrentField] = useState<boolean | any>(null);
@@ -125,7 +126,7 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
     if (isLoading)
       return (
         <div>
-          <CircularProgress />
+          <CircularProgress size={16} />
         </div>
       );
 
@@ -138,8 +139,12 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
           onClose={handleAddOrUpdateFieldClose}
           onSuccess={handleAddOrUpdateFieldSuccess}
         />
-        <div>
-          <Button onClick={handleAddFieldClick}>Add a Field</Button>
+        <div className="flex items-center gap-2">
+          <div>
+            <Button onClick={handleAddFieldClick}>Add a Field</Button>
+          </div>
+
+          {isValidating && <CircularProgress size={16} />}
         </div>
         {renderSchemaDetails()}
       </div>

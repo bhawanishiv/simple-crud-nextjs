@@ -36,7 +36,9 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
 
   const router = useRouter();
 
-  const { isLoading, data, mutate } = useSwr('schemas', () => getSchemas());
+  const { isLoading, isValidating, data, mutate } = useSwr('schemas', () =>
+    getSchemas()
+  );
 
   const [currentSchema, setCurrentSchema] = useState(0);
   const [addOrUpdateSchemaOpen, setAddOrUpdateSchema] = useState<any | boolean>(
@@ -66,7 +68,7 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
   };
 
   const renderSchemasPage = () => {
-    if (isLoading) return <CircularProgress />;
+    if (isLoading) return <CircularProgress size={16} />;
     if (!data) return <div>Not found</div>;
     const { count, schemas } = data;
     return (
@@ -84,9 +86,14 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
         <div className="flex ">
           <div className="w-1/5 p-3">
             <div className="flex  items-center justify-between">
-              <Typography>Schemas</Typography>
+              <div className="flex items-center gap-2">
+                <Typography>Schemas</Typography>
+                <div>{isValidating && <CircularProgress size={16} />}</div>
+              </div>
               <div>
-                <Button onClick={handleAddSchema}>Add a Schema</Button>
+                <Button className="whitespace-nowrap" onClick={handleAddSchema}>
+                  Add a Schema
+                </Button>
               </div>
             </div>
             <List>

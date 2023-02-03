@@ -130,6 +130,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
     data: relatedDocs,
     mutate: mutateRefItems,
     isLoading,
+    isValidating: isRefItemValidating,
   } = useSwr(
     isLoadingInitialData ? null : 'getReferencedItems',
     async () => await getReferencedItems(data ? data[0] : null)
@@ -214,7 +215,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
     if (isLoadingInitialData || isLoading) {
       return (
         <div>
-          <CircularProgress />
+          <CircularProgress size={16} />
         </div>
       );
     }
@@ -244,9 +245,16 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
         <div className="p-6">
           <div>
             <div className="flex items-center justify-between">
-              <div>
-                <Chip label={schema.name} />
-                <Typography>{schema.title}</Typography>
+              <div className="flex items-center gap-2">
+                <div>
+                  <Chip label={schema.name} />
+                  <Typography>{schema.title}</Typography>
+                </div>
+                <div>
+                  {(isValidating || isRefItemValidating) && (
+                    <CircularProgress size={16} />
+                  )}
+                </div>
               </div>
               <div>
                 <Button onClick={handleAddItem}>

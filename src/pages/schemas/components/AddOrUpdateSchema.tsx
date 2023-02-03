@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import Drawer from '@mui/material/Drawer';
-import Button from '@mui/material/Button';
+import LoadingButton from '@mui/lab/LoadingButton';
 import TextField from '@mui/material/TextField';
 import Chip from '@mui/material/Chip';
 
@@ -94,9 +94,15 @@ const AddOrUpdateSchema: React.FC<AddOrUpdateSchemaProps> = (props) => {
             </div>
           </div>
           <div className="flex items-center py-2">
-            <Button variant="outlined" type="submit" disableElevation fullWidth>
+            <LoadingButton
+              variant="outlined"
+              type="submit"
+              loading={isSubmitting}
+              disableElevation
+              fullWidth
+            >
               Save
-            </Button>
+            </LoadingButton>
           </div>
         </form>
       </Drawer>
