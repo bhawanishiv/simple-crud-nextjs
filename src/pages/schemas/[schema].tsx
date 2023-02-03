@@ -180,7 +180,8 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
         f !== '_id' &&
         f !== 'updatedAt' &&
         f !== 'createdAt' &&
-        f !== '__v'
+        f !== '__v' &&
+        typeof item[f] !== 'object'
     );
   };
 

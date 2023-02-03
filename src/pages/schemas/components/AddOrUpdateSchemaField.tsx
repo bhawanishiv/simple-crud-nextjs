@@ -10,12 +10,6 @@ import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
@@ -55,7 +49,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
       mode: 'all',
     });
 
-  const [relationType, setRelationType] = useState('hasOne');
+  const [relationType, setRelationType] = useState<string>('hasOne');
   const [schemaSearch, setSchemaSearch] = useState('');
   const [schemasOptions, setSchemasOptions] = useState<
     { title: string; id: string }[]
@@ -190,6 +184,8 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
           </ButtonGroup>
         </div>
 
+        {renderRelationDescription()}
+
         <div className="py-2">
           <Controller
             control={control}
@@ -238,7 +234,6 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
             }}
           />
         </div>
-        {renderRelationDescription()}
       </>
     );
   };
@@ -340,6 +335,9 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
         required: field.required,
         unique: field.unique,
       });
+      if (field.type === 'related' && field.relationType) {
+        setRelationType(field.relationType);
+      }
     } else {
       reset({
         title: '',

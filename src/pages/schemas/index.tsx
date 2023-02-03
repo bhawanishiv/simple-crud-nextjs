@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 import cx from 'classnames';
 import _ from 'lodash';
+import moment from 'moment';
 
 import useSwr from 'swr';
 
@@ -16,7 +17,7 @@ import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 
-import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
 import { IDynamicSchema } from '@/interfaces/DynamicSchema';
 
@@ -98,16 +99,16 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
                     secondaryAction={
                       <IconButton
                         edge="end"
-                        aria-label="delete"
-                        onClick={handleGoToSchemaPage(schema)}
+                        aria-label="edit"
+                        onClick={handleSchemaDetailsClick(schema, index)}
                       >
-                        <ArrowForwardOutlinedIcon />
+                        <EditOutlinedIcon />
                       </IconButton>
                     }
                   >
                     <ListItemButton
                       className=""
-                      onClick={handleSchemaDetailsClick(schema, index)}
+                      onClick={handleGoToSchemaPage(schema)}
                     >
                       <ListItemText
                         primaryTypographyProps={{
@@ -115,7 +116,7 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
                             index === currentSchema ? 'primary' : undefined,
                         }}
                         primary={schema.title}
-                        secondary={schema.updatedAt}
+                        secondary={moment(schema.updatedAt).format('LLL')}
                       />
                     </ListItemButton>
                   </ListItem>

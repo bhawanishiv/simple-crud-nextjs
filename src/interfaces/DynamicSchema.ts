@@ -34,4 +34,6 @@ export interface IDynamicSchemaField {
   default?: any;
   relatedSchema?: string;
   relationType?: IDynamicSchemaRelationType;
+  createdAt: string;
+  updatedAt: string;
 }
