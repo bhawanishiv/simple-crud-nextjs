@@ -27,9 +27,12 @@ const CreateDynamicFieldSchema = z.object({
     .optional(),
 });
 
+const ListOptionsSchema = z.array(z.string().trim()).min(1);
+
 const UpdateFieldSchema = z.object({
   id: z.string().trim(),
   title: z.string().trim(),
+  options: z.array(z.string().trim()).min(1).optional(),
 });
 
 type Data = {
@@ -72,6 +75,7 @@ const getSchemaAndFields = async (
         default: 1,
         relationType: 1,
         relatedSchema: 1,
+        options: 1,
       }
     ).exec();
 
@@ -96,6 +100,11 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const field = CreateDynamicFieldSchema.parse(req.body);
 
+    let options;
+    if (field.type === 'list') {
+      options = ListOptionsSchema.parse(req.body.options);
+    }
+
     const name = field.name || _.camelCase(field.title);
 
     await mongoClient;
@@ -118,6 +127,7 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
     const newField = new DynamicSchemaField({
       ...field,
       name,
+      options,
       schema: schemaId,
     });
     const createdField = await newField.save();

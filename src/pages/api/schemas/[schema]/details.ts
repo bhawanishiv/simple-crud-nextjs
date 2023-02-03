@@ -89,6 +89,7 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
           default: 1,
           relatedSchema: 1,
           relationType: 1,
+          options: 1,
         }
       ).exec());
 
