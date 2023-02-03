@@ -45,3 +45,19 @@ export default function MyApp(props: MyAppProps) {
     </CacheProvider>
   );
 }
+
+MyApp.getInitialProps = async (context: any) => {
+  const { Component, ctx } = context;
+
+  return {
+    pageProps: {
+      // https://nextjs.org/docs/advanced-features/custom-app#caveats
+      // ...(await App.getInitialProps(context)).pageProps,
+      ...(Component.getInitialProps
+        ? await Component.getInitialProps(ctx)
+        : {}),
+      // Some custom thing for all pages
+      pathname: ctx.pathname,
+    },
+  };
+};

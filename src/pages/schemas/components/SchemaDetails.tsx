@@ -55,13 +55,16 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
     setCurrentField(null);
   };
 
+  const renderNoDef = () => {
+    return (
+      <div>
+        <Typography>No schema definitions found</Typography>
+      </div>
+    );
+  };
   const renderSchemaDetails = () => {
     if (!data) {
-      return (
-        <div>
-          <Typography>No schema definitions found</Typography>
-        </div>
-      );
+      return renderNoDef();
     }
 
     const { count, fields } = data;
