@@ -1,0 +1,362 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Simple CRUD APIs",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/schemas/{schemaName}/details": {
+      "post": {
+        "tags": ["Dynamic schema item"],
+        "description": "Get paginated items based for the provided schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schemaName",
+            "description": "Schema name (Unique name which was use while creation)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Limit, which results in maximum number of items per request",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "skip",
+            "description": "Skip, required to skip some items, for pagination",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the paginated response of items with count"
+          },
+          "400": {
+            "description": "Error, for any invalid input"
+          },
+          "404": {
+            "description": "Results error if schema is not found"
+          }
+        }
+      }
+    },
+    "/api/schemas/{schemaName}/fields": {
+      "get": {
+        "tags": ["Dynamic schema fields"],
+        "description": "Get fields information along with schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schemaName",
+            "description": "Schema name (Unique name which was use while creation)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the fields information along with schema"
+          },
+          "400": {
+            "description": "Error, for any invalid input"
+          },
+          "404": {
+            "description": "Results error if schema is not found"
+          }
+        }
+      }
+    },
+    "/api/schemas/{id}/fields": {
+      "post": {
+        "tags": ["Dynamic schema fields"],
+        "description": "Create a new field for the dynamic schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Schema Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the created field"
+          },
+          "400": {
+            "description": "Error, for any invalid input"
+          },
+          "404": {
+            "description": "Results error if schema id is incorrect"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Dynamic schema fields"],
+        "description": "Update the field for the dynamic schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Schema Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "id",
+            "description": "Field id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the updated field"
+          },
+          "400": {
+            "description": "Error, for any invalid input"
+          },
+          "404": {
+            "description": "Results error if schema or field id is incorrect"
+          }
+        }
+      }
+    },
+    "/api/schemas/{id}": {
+      "post": {
+        "tags": ["Dynamic schema item"],
+        "description": "Create an item based on defined schema fields",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Schema Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the created item"
+          },
+          "400": {
+            "description": "Error, for any invalid input"
+          },
+          "404": {
+            "description": "Results error if schema id is not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Dynamic schema item"],
+        "description": "Update an item based on defined schema fields",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Schema Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "id",
+            "description": "Item id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the updated item"
+          },
+          "400": {
+            "description": "Error, for any invalid input"
+          },
+          "404": {
+            "description": "Results error if schema or item id is not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Dynamic schema item"],
+        "description": "Delete the existing item created using dynamic schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Schema Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "id",
+            "description": "Item id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the deleted item"
+          },
+          "400": {
+            "description": "Error, for any invalid input"
+          },
+          "404": {
+            "description": "Results error if schema or item id is not found"
+          }
+        }
+      }
+    },
+    "/api/schemas": {
+      "get": {
+        "tags": ["Schema"],
+        "description": "Returns a paginated list of dynamic schemas",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Limit, which results in maximum number of items per request",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "skip",
+            "description": "Skip, required to skip some items, for pagination",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "description": "Query, used to find matching Schema objects",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of dynamic schemas"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Schema"],
+        "description": "Create a new dynamic schema",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "title",
+            "description": "title of the schema, used as a label for the schema",
+            "example": "Fancy Users",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "name",
+            "description": "Unique name of the schema, which shouldn't exist while creating",
+            "example": "User",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the newly created dynamic schema"
+          },
+          "400": {
+            "description": "Returns error message if schema is invalid or already exists"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Schema"],
+        "description": "Update the existing dynamic schema",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "id",
+            "description": "Id of the dynamic schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "title",
+            "description": "Title of the dynamic schema to update",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the updated values of the dynamic schema"
+          },
+          "400": {
+            "description": "Returns error, if there is any"
+          }
+        }
+      }
+    }
+  },
+  "components": {},
+  "tags": []
+}

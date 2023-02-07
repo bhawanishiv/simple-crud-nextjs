@@ -146,6 +146,90 @@ const updateSchema = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/schemas:
+ *   get:
+ *     tags: [Schema]
+ *     description: Returns a paginated list of dynamic schemas
+ *     parameters:
+ *       - in : query
+ *         name : limit
+ *         description : Limit, which results in maximum number of items per request
+ *         required : true
+ *         schema :
+ *           type : integer
+ *           format : int32
+ *           minimum: 1
+ *           maximum: 100
+ *
+ *       - in : query
+ *         name : skip
+ *         description : Skip, required to skip some items, for pagination
+ *         required : true
+ *         schema :
+ *           type : integer
+ *           format : int32
+ *           minimum: 0
+ *
+ *       - in : query
+ *         name : query
+ *         description : Query, used to find matching Schema objects
+ *         required : false
+ *         schema :
+ *           type : string
+ *     responses:
+ *       200:
+ *         description: List of dynamic schemas
+ *
+ *   post:
+ *      tags: [Schema]
+ *      description: Create a new dynamic schema
+ *      parameters:
+ *       - in : body
+ *         name : title
+ *         description : title of the schema, used as a label for the schema
+ *         example: Fancy Users
+ *         required : true
+ *         schema :
+ *           type : string
+ *
+ *       - in : body
+ *         name : name
+ *         description : Unique name of the schema, which shouldn't exist while creating
+ *         example: User
+ *         required : true
+ *         schema :
+ *           type : string
+ *      responses:
+ *        200:
+ *          description: Returns the newly created dynamic schema
+ *        400:
+ *          description: Returns error message if schema is invalid or already exists
+ *
+ *   patch:
+ *      tags: [Schema]
+ *      description: Update the existing dynamic schema
+ *      parameters:
+ *       - in : body
+ *         name : id
+ *         description : Id of the dynamic schema
+ *         required : true
+ *         schema :
+ *           type : string
+ *
+ *       - in : body
+ *         name : title
+ *         description : Title of the dynamic schema to update
+ *         required : true
+ *         schema :
+ *           type : string
+ *      responses:
+ *        200:
+ *          description: Returns the updated values of the dynamic schema
+ *        400:
+ *          description: Returns error, if there is any
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
