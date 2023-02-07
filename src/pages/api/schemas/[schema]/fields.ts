@@ -173,6 +173,101 @@ const updateField = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
+/**
+ *
+ * @swagger
+ * /api/schemas/{schemaName}/fields:
+ *   get:
+ *     tags: [Dynamic schema fields]
+ *     description: Get fields information along with schema
+ *     parameters:
+ *       - in : path
+ *         name: schemaName
+ *         description: Schema name (Unique name which was use while creation)
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *     responses:
+ *        200:
+ *          description: Returns the fields information along with schema
+ *          content:
+ *              application/json:
+ *                 schema:
+ *                    type: object
+ *                    properties:
+ *                       schema:
+ *                           $ref: '#/components/schemas/IDynamicSchema'
+ *
+ *                       fields:
+ *                          type: array
+ *                          items:
+ *                            type: object
+ *                            $ref: '#/components/schemas/IDynamicSchemaField'
+ *
+ *        404:
+ *          description: Results error if schema is not found
+ *        400:
+ *          description: Error, for any invalid input
+ *
+ *
+ * /api/schemas/{id}/fields:
+ *   post:
+ *     tags: [Dynamic schema fields]
+ *     description: Create a new field for the dynamic schema
+ *     parameters:
+ *       - in : path
+ *         name: id
+ *         description: Schema Id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *     responses:
+ *        200:
+ *          description: Returns the created field
+ *          content:
+ *              application/json:
+ *                 schema:
+ *                    type: object
+ *                    $ref: '#/components/schemas/IDynamicSchemaField'
+ *        404:
+ *          description: Results error if schema id is incorrect
+ *        400:
+ *          description: Error, for any invalid input
+ *
+ *   patch:
+ *     tags: [Dynamic schema fields]
+ *     description: Update the field for the dynamic schema
+ *     parameters:
+ *       - in : path
+ *         name: id
+ *         description: Schema Id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *       - in : body
+ *         name: id
+ *         description: Field id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *     responses:
+ *        200:
+ *          description: Returns the updated field
+ *          content:
+ *              application/json:
+ *                 schema:
+ *                    type: object
+ *                    $ref: '#/components/schemas/IDynamicSchemaField'
+ *        404:
+ *          description: Results error if schema or field id is incorrect
+ *        400:
+ *          description: Error, for any invalid input
+ *
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>

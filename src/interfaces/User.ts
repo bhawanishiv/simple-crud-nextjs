@@ -3,7 +3,7 @@ export type IUser = {
   firstName: string;
   lastName: string;
   email: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   role: 'ADMIN' | 'USER';
 };

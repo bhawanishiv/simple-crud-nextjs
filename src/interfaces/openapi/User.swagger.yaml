@@ -1,0 +1,49 @@
+openapi: 3.0.0
+info:
+  title: Converted from User.swagger.yaml with typeconv
+  version: '1'
+  x-id: User.swagger.yaml
+  x-comment: >-
+    Generated from src/interfaces/User.ts by core-types-json-schema
+    (https://github.com/grantila/core-types-json-schema) on behalf of typeconv
+    (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    IUser:
+      properties:
+        uid:
+          title: IUser.uid
+          type: string
+        firstName:
+          title: IUser.firstName
+          type: string
+        lastName:
+          title: IUser.lastName
+          type: string
+        email:
+          title: IUser.email
+          type: string
+        createdAt:
+          title: IUser.createdAt
+          type: string
+        updatedAt:
+          title: IUser.updatedAt
+          type: string
+        role:
+          enum:
+            - ADMIN
+            - USER
+          title: IUser.role
+          type: string
+      required:
+        - uid
+        - firstName
+        - lastName
+        - email
+        - createdAt
+        - updatedAt
+        - role
+      additionalProperties: false
+      title: IUser
+      type: object

@@ -157,6 +157,71 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
+/**
+ *
+ * @swagger
+ * /api/schemas/{schemaName}/details:
+ *   post:
+ *     tags: [Dynamic schema item]
+ *     description: Get paginated items based on the provided schema
+ *     parameters:
+ *       - in : path
+ *         name: schemaName
+ *         description: Schema name (Unique name which was use while creation)
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *       - in : query
+ *         name : limit
+ *         description : Limit, which results in maximum number of items per request
+ *         required : true
+ *         schema :
+ *           type : integer
+ *           format : int32
+ *           minimum: 1
+ *           maximum: 100
+ *
+ *       - in : query
+ *         name : skip
+ *         description : Skip, required to skip some items, for pagination
+ *         required : true
+ *         schema :
+ *           type : integer
+ *           format : int32
+ *           minimum: 0
+ *
+ *     responses:
+ *        200:
+ *          description: Returns the paginated response of items with count
+ *          content:
+ *              application/json:
+ *                schema:
+ *                    type: object
+ *                    properties:
+ *                       schema:
+ *                           $ref: '#/components/schemas/IDynamicSchema'
+ *
+ *                       fields:
+ *                          type: array
+ *                          items:
+ *                            type: object
+ *                            $ref: '#/components/schemas/IDynamicSchemaField'
+ *
+ *                       items:
+ *                          type: array
+ *                          items:
+ *                            type: object
+ *
+ *                       count:
+ *                          type: integer
+ *
+ *        404:
+ *          description: Results error if schema is not found
+ *        400:
+ *          description: Error, for any invalid input
+ *
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>

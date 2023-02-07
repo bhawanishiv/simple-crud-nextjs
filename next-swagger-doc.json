@@ -1,0 +1,11 @@
+{
+  "apiFolder": "src/pages/api",
+  "schemaFolders": ["src/interfaces"],
+  "definition": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Simple CRUD APIs",
+      "version": "0.1.0"
+    }
+  }
+}

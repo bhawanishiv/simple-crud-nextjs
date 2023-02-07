@@ -261,6 +261,94 @@ const deleteItem = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
+/**
+ *
+ * @swagger
+ * /api/schemas/{id}:
+ *   post:
+ *     tags: [Dynamic schema item]
+ *     description: Create an item based on defined schema fields
+ *     parameters:
+ *       - in : path
+ *         name: id
+ *         description: Schema Id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *     responses:
+ *        200:
+ *          description: Returns the created item
+ *          content:
+ *              application/json:
+ *                 schema:
+ *                    type: object
+ *
+ *        404:
+ *          description: Results error if schema id is not found
+ *        400:
+ *          description: Error, for any invalid input
+ *   patch:
+ *     tags: [Dynamic schema item]
+ *     description: Update an item based on defined schema fields
+ *     parameters:
+ *       - in : path
+ *         name: id
+ *         description: Schema Id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *       - in : body
+ *         name: id
+ *         description: Item id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *     responses:
+ *        200:
+ *          description: Returns the updated item
+ *          content:
+ *              application/json:
+ *                 schema:
+ *                    type: object
+ *        404:
+ *          description: Results error if schema or item id is not found
+ *        400:
+ *          description: Error, for any invalid input
+ *
+ *   delete:
+ *     tags: [Dynamic schema item]
+ *     description: Delete the existing item created using dynamic schema
+ *     parameters:
+ *       - in : path
+ *         name: id
+ *         description: Schema Id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *       - in : body
+ *         name: id
+ *         description: Item id
+ *         required: true
+ *         schema:
+ *           type: string
+ *
+ *     responses:
+ *        200:
+ *          description: Returns the deleted item
+ *          content:
+ *              application/json:
+ *                 schema:
+ *                    type: object
+ *        404:
+ *          description: Results error if schema or item id is not found
+ *        400:
+ *          description: Error, for any invalid input
+ *
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>

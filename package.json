@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "cpy 'src/interfaces/**/*.swagger.yaml' public/openapi --flat",
+    "openapi:yaml": "typeconv -f ts -t oapi --oapi-format yaml --output-extension 'swagger.yaml' --output-directory 'src/interfaces/openapi' 'src/interfaces/*.ts'",
+    "buildwithdoc": "yarn build && yarn openapi:yaml && yarn postbuild",
     "start": "next start",
     "lint": "next lint"
   },
@@ -29,19 +32,25 @@
     "mongodb": "^4.13.0",
     "mongoose": "^6.8.3",
     "next": "13.1.2",
+    "next-swagger-doc": "^0.3.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.42.1",
+    "swagger-ui-react": "^4.15.5",
     "swr": "^2.0.1",
     "typescript": "4.9.4",
     "zod": "^3.20.2"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.191",
+    "@types/swagger-jsdoc": "^6.0.1",
+    "@types/swagger-ui-react": "^4.11.0",
     "autoprefixer": "^10.4.13",
+    "cpy-cli": "^4.2.0",
     "eslint-config-prettier": "^8.6.0",
     "postcss": "^8.4.21",
     "prettier": "^2.8.3",
-    "tailwindcss": "^3.2.4"
+    "tailwindcss": "^3.2.4",
+    "typeconv": "^2.1.0"
   }
 }

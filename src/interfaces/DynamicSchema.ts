@@ -4,8 +4,8 @@ export interface IDynamicSchema {
   id: string;
   title: string;
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const FieldTypeEnum = z.enum([
@@ -18,10 +18,17 @@ export const FieldTypeEnum = z.enum([
   'related',
 ]);
 
-export type IDynamicSchemaFieldType = z.infer<typeof FieldTypeEnum>;
+export type IDynamicSchemaFieldType =
+  | 'number'
+  | 'boolean'
+  | 'text'
+  | 'multi-text'
+  | 'list'
+  | 'date'
+  | 'related';
 
 export const RelatedTypeEnum = z.enum(['hasOne', 'hasMany']);
-export type IDynamicSchemaRelationType = z.infer<typeof RelatedTypeEnum>;
+export type IDynamicSchemaRelationType = 'hasOne' | 'hasMany';
 
 export interface IDynamicSchemaField {
   id: string;
