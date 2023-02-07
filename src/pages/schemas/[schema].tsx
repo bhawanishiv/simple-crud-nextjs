@@ -27,6 +27,7 @@ import {
   IDynamicSchemaField,
 } from '@/interfaces/DynamicSchema';
 
+import AddOrUpdateSchemaField from './components/AddOrUpdateSchemaField';
 import AddOrUpdateSchemaItem from './components/AddOrUpdateSchemaItem';
 import DeleteItemDialog from './components/DeleteItemDialog';
 
@@ -125,6 +126,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
 
   const [addOrUpdateItem, setAddOrUpdateItem] = useState<any | boolean>(false);
   const [deleteItem, setDeleteItem] = useState<any | boolean>(false);
+  const [currentField, setCurrentField] = useState<boolean | any>(null);
 
   const {
     data: relatedDocs,
@@ -145,6 +147,18 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
   // const isReachingEnd =
   //   isEmpty || (data && data[data.length - 1]?.length < PAGE_SIZE);
   // const isRefreshing = isValidating && data && data.length === size;
+  const handleAddFieldClick = () => {
+    setCurrentField(true);
+  };
+
+  const handleAddOrUpdateFieldClose = (e: any) => {
+    setCurrentField(null);
+  };
+
+  const handleAddOrUpdateFieldSuccess = (data: IDynamicSchemaField) => {
+    mutate();
+    setCurrentField(null);
+  };
 
   const handleDeleteItem = (schema: IDynamicSchema, item: any) => () => {
     setDeleteItem({ item, schemaId: schema.id });
@@ -256,10 +270,15 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
                   )}
                 </div>
               </div>
-              <div>
-                <Button onClick={handleAddItem}>
-                  Add a {_.lowerCase(schema.title)}
-                </Button>
+              <div className="flex items-center gap-2">
+                <div>
+                  <Button onClick={handleAddItem}>
+                    Add a {_.lowerCase(schema.title)}
+                  </Button>
+                </div>
+                <div>
+                  <Button onClick={handleAddFieldClick}>Add a field</Button>
+                </div>
               </div>
             </div>
           </div>
@@ -322,6 +341,13 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
           item={typeof deleteItem === 'object' ? deleteItem.item : undefined}
           onDeleteSuccess={handleDeleteItemSuccess}
           onClose={handleDeleteItemClose}
+        />
+        <AddOrUpdateSchemaField
+          schemaId={schema.id}
+          field={typeof currentField === 'object' ? currentField : undefined}
+          open={Boolean(currentField)}
+          onClose={handleAddOrUpdateFieldClose}
+          onSuccess={handleAddOrUpdateFieldSuccess}
         />
       </div>
     );
