@@ -6,6 +6,7 @@ import cx from 'classnames';
 import Typography from '@mui/material/Typography';
 
 import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 
 type HomePageProps = {};
 
@@ -14,7 +15,7 @@ const HomePage: React.FC<HomePageProps> = (props) => {
     return (
       <main>
         <div className="h-screen w-screen flex items-center justify-center">
-          <ul className="flex items-center gap-2">
+          <ul className="flex items-center gap-3">
             <li>
               <Typography
                 component={Link}
@@ -27,6 +28,20 @@ const HomePage: React.FC<HomePageProps> = (props) => {
               >
                 <ViewInArOutlinedIcon />
                 <span className="px-2">View Schemas</span>
+              </Typography>
+            </li>{' '}
+            <li>
+              <Typography
+                component={Link}
+                sx={{
+                  ':hover': {
+                    color: 'primary',
+                  },
+                }}
+                href="/api-doc"
+              >
+                <DescriptionOutlinedIcon />
+                <span className="px-2">View APIs docs</span>
               </Typography>
             </li>
           </ul>

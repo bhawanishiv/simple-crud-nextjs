@@ -8,7 +8,7 @@
     "/api/schemas/{schemaName}/details": {
       "post": {
         "tags": ["Dynamic schema item"],
-        "description": "Get paginated items based for the provided schema",
+        "description": "Get paginated items based on the provided schema",
         "parameters": [
           {
             "in": "path",
@@ -45,7 +45,35 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the paginated response of items with count"
+            "description": "Returns the paginated response of items with count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schema": {
+                      "$ref": "#/components/schemas/IDynamicSchema"
+                    },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "$ref": "#/components/schemas/IDynamicSchemaField"
+                      }
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Error, for any invalid input"
@@ -73,7 +101,26 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the fields information along with schema"
+            "description": "Returns the fields information along with schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schema": {
+                      "$ref": "#/components/schemas/IDynamicSchema"
+                    },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "$ref": "#/components/schemas/IDynamicSchemaField"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Error, for any invalid input"
@@ -101,7 +148,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the created field"
+            "description": "Returns the created field",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/IDynamicSchemaField"
+                }
+              }
+            }
           },
           "400": {
             "description": "Error, for any invalid input"
@@ -136,7 +191,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the updated field"
+            "description": "Returns the updated field",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/IDynamicSchemaField"
+                }
+              }
+            }
           },
           "400": {
             "description": "Error, for any invalid input"
@@ -164,7 +227,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the created item"
+            "description": "Returns the created item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
             "description": "Error, for any invalid input"
@@ -199,7 +269,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the updated item"
+            "description": "Returns the updated item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
             "description": "Error, for any invalid input"
@@ -234,7 +311,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the deleted item"
+            "description": "Returns the deleted item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
             "description": "Error, for any invalid input"
@@ -355,8 +439,193 @@
           }
         }
       }
+    },
+    "openapi": {
+      "0": "3",
+      "1": ".",
+      "2": "0",
+      "3": ".",
+      "4": "0"
+    },
+    "info": {
+      "title": "Converted from User.swagger.yaml with typeconv",
+      "version": "1",
+      "x-id": "User.swagger.yaml",
+      "x-comment": "Generated from src/interfaces/User.ts by core-types-json-schema (https://github.com/grantila/core-types-json-schema) on behalf of typeconv (https://github.com/grantila/typeconv)"
     }
   },
-  "components": {},
+  "components": {
+    "schemas": {
+      "IDynamicSchema": {
+        "properties": {
+          "id": {
+            "title": "IDynamicSchema.id",
+            "type": "string"
+          },
+          "title": {
+            "title": "IDynamicSchema.title",
+            "type": "string"
+          },
+          "name": {
+            "title": "IDynamicSchema.name",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "IDynamicSchema.createdAt",
+            "type": "string"
+          },
+          "updatedAt": {
+            "title": "IDynamicSchema.updatedAt",
+            "type": "string"
+          }
+        },
+        "required": ["id", "title", "name", "createdAt", "updatedAt"],
+        "additionalProperties": false,
+        "title": "IDynamicSchema",
+        "type": "object"
+      },
+      "IDynamicSchemaFieldType": {
+        "enum": [
+          "number",
+          "boolean",
+          "text",
+          "multi-text",
+          "list",
+          "date",
+          "related"
+        ],
+        "title": "IDynamicSchemaFieldType",
+        "type": "string"
+      },
+      "IDynamicSchemaRelationType": {
+        "enum": ["hasOne", "hasMany"],
+        "title": "IDynamicSchemaRelationType",
+        "type": "string"
+      },
+      "IDynamicSchemaField": {
+        "properties": {
+          "id": {
+            "title": "IDynamicSchemaField.id",
+            "type": "string"
+          },
+          "schema": {
+            "title": "IDynamicSchemaField.schema",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "title": {
+            "title": "IDynamicSchemaField.title",
+            "type": "string"
+          },
+          "name": {
+            "title": "IDynamicSchemaField.name",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/IDynamicSchemaFieldType",
+            "title": "IDynamicSchemaField.type"
+          },
+          "unique": {
+            "title": "IDynamicSchemaField.unique",
+            "type": "boolean"
+          },
+          "required": {
+            "title": "IDynamicSchemaField.required",
+            "type": "boolean"
+          },
+          "default": {
+            "title": "IDynamicSchemaField.default"
+          },
+          "relatedSchema": {
+            "title": "IDynamicSchemaField.relatedSchema",
+            "type": "string"
+          },
+          "relationType": {
+            "$ref": "#/components/schemas/IDynamicSchemaRelationType",
+            "title": "IDynamicSchemaField.relationType"
+          },
+          "createdAt": {
+            "title": "IDynamicSchemaField.createdAt",
+            "type": "string"
+          },
+          "updatedAt": {
+            "title": "IDynamicSchemaField.updatedAt",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "title": "IDynamicSchemaField.options.[]",
+              "type": "string"
+            },
+            "title": "IDynamicSchemaField.options",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "schema",
+          "title",
+          "name",
+          "type",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "title": "IDynamicSchemaField",
+        "type": "object"
+      },
+      "IUser": {
+        "properties": {
+          "uid": {
+            "title": "IUser.uid",
+            "type": "string"
+          },
+          "firstName": {
+            "title": "IUser.firstName",
+            "type": "string"
+          },
+          "lastName": {
+            "title": "IUser.lastName",
+            "type": "string"
+          },
+          "email": {
+            "title": "IUser.email",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "IUser.createdAt",
+            "type": "string"
+          },
+          "updatedAt": {
+            "title": "IUser.updatedAt",
+            "type": "string"
+          },
+          "role": {
+            "enum": ["ADMIN", "USER"],
+            "title": "IUser.role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "firstName",
+          "lastName",
+          "email",
+          "createdAt",
+          "updatedAt",
+          "role"
+        ],
+        "additionalProperties": false,
+        "title": "IUser",
+        "type": "object"
+      }
+    }
+  },
   "tags": []
 }
