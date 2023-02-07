@@ -7,7 +7,7 @@
     "build": "next build",
     "postbuild": "cpy 'src/interfaces/**/*.swagger.yaml' public/openapi --flat",
     "openapi:yaml": "typeconv -f ts -t oapi --oapi-format yaml --output-extension 'swagger.yaml' --output-directory 'src/interfaces/openapi' 'src/interfaces/*.ts'",
-    "buildwithdoc": "yarn build && yarn openapi:yaml && yarn postbuild",
+    "buildwithdoc": "yarn run build && yarn run openapi:yaml && yarn run postbuild",
     "start": "next start",
     "lint": "next lint"
   },
