@@ -11,12 +11,12 @@ function ApiDoc({ spec }: InferGetStaticPropsType<typeof getStaticProps>) {
 
 export const getStaticProps: GetStaticProps = async () => {
   const spec: Record<string, any> = createSwaggerSpec({
-    apiFolder: 'pages/api',
-    schemaFolders: ['models'],
+    apiFolder: 'src/pages/api',
+    schemaFolders: ['src/interfaces'],
     definition: {
       openapi: '3.0.0',
       info: {
-        title: 'Next Swagger API Example',
+        title: 'Simple CRUD APIs',
         version: '1.0',
       },
     },
