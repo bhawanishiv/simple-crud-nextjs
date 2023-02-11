@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 
 import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 
 type HomePageProps = {};
 
@@ -29,7 +30,7 @@ const HomePage: React.FC<HomePageProps> = (props) => {
                 <ViewInArOutlinedIcon />
                 <span className="px-2">View Schemas</span>
               </Typography>
-            </li>{' '}
+            </li>
             <li>
               <Typography
                 component={Link}
@@ -42,6 +43,20 @@ const HomePage: React.FC<HomePageProps> = (props) => {
               >
                 <DescriptionOutlinedIcon />
                 <span className="px-2">View APIs docs</span>
+              </Typography>
+            </li>
+            <li>
+              <Typography
+                component={Link}
+                sx={{
+                  ':hover': {
+                    color: 'primary',
+                  },
+                }}
+                href="/playground"
+              >
+                <PlayArrowOutlinedIcon />
+                <span className="px-2">Playground</span>
               </Typography>
             </li>
           </ul>
