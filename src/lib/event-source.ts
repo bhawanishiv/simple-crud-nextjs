@@ -1,52 +1,59 @@
-export interface SSEOptions {
-  headers: { [name: string]: any };
-  method: 'GET' | 'POST';
-  payload?: any;
-  withCredentials?: boolean;
-}
+type EventServiceHeaders = { [key: string]: any };
+type EventServiceState = 'initialized' | 'connecting' | 'open' | 'closed';
+type HttpRequestMethod = 'GET' | 'POST';
+type Events = 'ready' | 'message' | 'error' | 'closed';
+type Listeners = { [key in Events]?: any[] };
 
-export const CustomEventSource = function (url: string, options: SSEOptions) {
-  if (!(this instanceof CustomEventSource)) {
-    return new CustomEventSource(url, options);
+export type EventServiceOptions = {
+  headers: EventServiceHeaders;
+  body?: any;
+  method: HttpRequestMethod;
+  withCredentials?: boolean;
+};
+
+const FIELD_SEPARATOR = ':';
+
+export class CustomEventService {
+  url: string;
+  headers: EventServiceHeaders;
+  readyState: EventServiceState;
+  method: HttpRequestMethod;
+  body: any;
+  withCredentials: boolean;
+  xhr: null | XMLHttpRequest;
+  progress: number;
+  chunk: string;
+  listeners: Listeners;
+
+  constructor(url: string, options: EventServiceOptions) {
+    this.url = url;
+    this.headers = options.headers || {};
+    this.body = typeof options.body !== 'undefined' ? options.body : '';
+    this.method = options.method || (this.body && 'POST') || 'GET';
+    this.withCredentials = !!options.withCredentials;
+    this.readyState = 'initialized';
+    this.xhr = null;
+    this.progress = 0;
+    this.chunk = '';
+    this.listeners = {};
   }
 
-  this.INITIALIZING = -1;
-  this.CONNECTING = 0;
-  this.OPEN = 1;
-  this.CLOSED = 2;
-
-  this.url = url;
-
-  options = options || {};
-  this.headers = options.headers || {};
-  this.payload = options.payload !== undefined ? options.payload : '';
-  this.method = options.method || (this.payload && 'POST') || 'GET';
-  this.withCredentials = !!options.withCredentials;
-
-  this.FIELD_SEPARATOR = ':';
-  this.listeners = {};
-
-  this.xhr = null;
-  this.readyState = this.INITIALIZING;
-  this.progress = 0;
-  this.chunk = '';
-
-  this.addEventListener = function (type, listener) {
-    if (this.listeners[type] === undefined) {
+  addEventListener(type: Events, listener: (...params: any[]) => any) {
+    if (typeof this.listeners[type] === 'undefined') {
       this.listeners[type] = [];
     }
 
     if (this.listeners[type].indexOf(listener) === -1) {
       this.listeners[type].push(listener);
     }
-  };
+  }
 
-  this.removeEventListener = function (type, listener) {
-    if (this.listeners[type] === undefined) {
+  removeEventListener(type: Events, listener: (...params: any[]) => any) {
+    if (typeof this.listeners[type] === 'undefined') {
       return;
     }
 
-    const filtered = [];
+    const filtered: any[] = [];
     this.listeners[type].forEach(function (element) {
       if (element !== listener) {
         filtered.push(element);
@@ -57,9 +64,9 @@ export const CustomEventSource = function (url: string, options: SSEOptions) {
     } else {
       this.listeners[type] = filtered;
     }
-  };
+  }
 
-  this.dispatchEvent = function (e) {
+  dispatchEvent(e?: CustomEvent | null) {
     if (!e) {
       return true;
     }
@@ -80,30 +87,28 @@ export const CustomEventSource = function (url: string, options: SSEOptions) {
         return !e.defaultPrevented;
       });
     }
-
     return true;
-  };
+  }
 
-  this._setReadyState = function (state) {
+  _setReadyState(state: EventServiceState) {
     const event = new CustomEvent('readystatechange');
     event.readyState = state;
-    this.readyState = state;
     this.dispatchEvent(event);
-  };
+  }
 
-  this._onStreamFailure = function (e) {
+  _onStreamFailure(e: any) {
     const event = new CustomEvent('error');
     event.data = e.currentTarget.response;
     this.dispatchEvent(event);
     this.close();
-  };
+  }
 
-  this._onStreamAbort = function (e) {
+  _onStreamAbort(e?: any) {
     this.dispatchEvent(new CustomEvent('abort'));
     this.close();
-  };
+  }
 
-  this._onStreamProgress = function (e) {
+  _onStreamProgress(e: any) {
     if (!this.xhr) {
       return;
     }
@@ -113,46 +118,47 @@ export const CustomEventSource = function (url: string, options: SSEOptions) {
       return;
     }
 
-    if (this.readyState == this.CONNECTING) {
+    if (this.readyState == 'connecting') {
       this.dispatchEvent(new CustomEvent('open'));
-      this._setReadyState(this.OPEN);
+      this._setReadyState('open');
     }
 
     const data = this.xhr.responseText.substring(this.progress);
     this.progress += data.length;
+    const self = this;
     data.split(/(\r\n|\r|\n){2}/g).forEach(
-      function (part) {
+      function (part: string) {
         if (part.trim().length === 0) {
-          this.dispatchEvent(this._parseEventChunk(this.chunk.trim()));
-          this.chunk = '';
+          self.dispatchEvent(self._parseEventChunk(self.chunk.trim()));
+          self.chunk = '';
         } else {
-          this.chunk += part;
+          self.chunk += part;
         }
       }.bind(this)
     );
-  };
+  }
 
-  this._onStreamLoaded = function (e) {
+  _onStreamLoaded(e: any) {
     this._onStreamProgress(e);
 
     // Parse the last chunk.
     this.dispatchEvent(this._parseEventChunk(this.chunk));
     this.chunk = '';
-  };
+  }
 
   /**
    * Parse a received SSE event chunk into a constructed event object.
    */
-  this._parseEventChunk = function (chunk) {
+  _parseEventChunk(chunk: string) {
     if (!chunk || chunk.length === 0) {
       return null;
     }
 
     const e = { id: null, retry: null, data: '', event: 'message' };
     chunk.split(/\n|\r\n|\r/).forEach(
-      function (line) {
+      function (line: string) {
         line = line.trimRight();
-        const index = line.indexOf(this.FIELD_SEPARATOR);
+        const index = line.indexOf(FIELD_SEPARATOR);
         if (index <= 0) {
           // Line was either empty, or started with a separator and is a comment.
           // Either way, ignore.
@@ -177,20 +183,20 @@ export const CustomEventSource = function (url: string, options: SSEOptions) {
     event.data = e.data;
     event.id = e.id;
     return event;
-  };
+  }
 
-  this._checkStreamClosed = function () {
+  _checkStreamClosed() {
     if (!this.xhr) {
       return;
     }
 
     if (this.xhr.readyState === XMLHttpRequest.DONE) {
-      this._setReadyState(this.CLOSED);
+      this._setReadyState('closed');
     }
-  };
+  }
 
-  this.stream = function () {
-    this._setReadyState(this.CONNECTING);
+  stream() {
+    this._setReadyState('connecting');
 
     this.xhr = new XMLHttpRequest();
     this.xhr.addEventListener('progress', this._onStreamProgress.bind(this));
@@ -206,16 +212,21 @@ export const CustomEventSource = function (url: string, options: SSEOptions) {
       this.xhr.setRequestHeader(header, this.headers[header]);
     }
     this.xhr.withCredentials = this.withCredentials;
-    this.xhr.send(this.payload);
-  };
+    this.xhr.send(this.body);
+  }
 
-  this.close = function () {
-    if (this.readyState === this.CLOSED) {
+  close() {
+    if (!this.xhr) {
+      this._setReadyState('closed');
+      return;
+    }
+
+    if (this.readyState === 'closed') {
       return;
     }
 
     this.xhr.abort();
     this.xhr = null;
-    this._setReadyState(this.CLOSED);
-  };
-};
+    this._setReadyState('closed');
+  }
+}

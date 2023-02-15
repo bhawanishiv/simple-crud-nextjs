@@ -1,34 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import _ from 'lodash';
 
-import { SubmitHandler, Controller, useForm } from 'react-hook-form';
+import JSONInput from 'react-json-editor-ajrm';
+import locale from 'react-json-editor-ajrm/locale/en';
 
 import LoadingButton from '@mui/lab/LoadingButton';
-import Autocomplete from '@mui/material/Autocomplete';
 import Typography from '@mui/material/Typography';
-import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
 
-import { IDynamicSchemaField } from '@/interfaces/DynamicSchema';
+import CloseIcon from '@mui/icons-material/Close';
+
 import api from '@/services/api';
-
-// import RelatedIcon, { relationshipItems } from './relatedicons';
-
-const fieldTypes = [
-  { label: 'Text', value: 'text' },
-  { label: 'Multi-line Text', value: 'multi-text' },
-  { label: 'Number', value: 'number' },
-  { label: 'Boolean', value: 'boolean' },
-  { label: 'Date', value: 'date' },
-  { label: 'List', value: 'list' },
-  { label: 'Relationship', value: 'related' },
-];
 
 type SchemaWizardProps = {
   text?: string;
@@ -40,31 +26,107 @@ type SchemaWizardProps = {
 const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
   const { text, open, onClose, onSuccess } = props;
 
-  console.log(`text->`, text);
+  const [initialValue, setInitialValue] = useState({});
+  const [finalValue, setFinalValue] = useState(initialValue);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const submitSchemaForm = async () => {
+    try {
+      //
+      console.log(`finalValue->`, finalValue);
+      const res = await api.request(
+        '/api/schemas/playground',
+        'POST',
+        finalValue
+      );
+      console.log(`res->`, res);
+      const data = await res.json();
+      console.log(`data->`, data);
+      if (!res.ok) throw new Error(data?.message);
+
+      if (!data) throw new Error();
+      await onSuccess(data);
+    } catch (e: any) {
+      //
+      console.log(`e->`, e);
+      setErrorMessage(e?.message || 'Something went wrong');
+    }
+  };
 
   const handleClose = (e: any) => {
     onClose(e);
   };
 
+  const handleInputChange = (params: any) => {
+    console.log(params);
+    setErrorMessage(params.error ? 'Something is wrong' : '');
+    setFinalValue(params.jsObject);
+  };
+
   const renderSchemaWizard = () => {
     return (
-      <Drawer anchor="right" open={open} onClose={handleClose}>
-        <form className="p-6">
-          <div className="flex flex-col flex-1"></div>
-          <div className="flex items-center py-2">
+      <form>
+        <Dialog onClose={handleClose} open={open} fullWidth maxWidth="xl">
+          <DialogTitle>
+            Schema wizard
+            {onClose ? (
+              <IconButton
+                aria-label="close"
+                onClick={onClose}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  color: (theme) => theme.palette.grey[500],
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            ) : null}
+          </DialogTitle>
+          <DialogContent>
+            <Typography className="text-sm pb-2" color="red">
+              {errorMessage}
+            </Typography>
+            <JSONInput
+              style={{ body: { fontSize: '16px' } }}
+              width="100%"
+              id="a_unique_id"
+              placeholder={initialValue}
+              // colors      = { darktheme }
+              locale={locale}
+              height="550px"
+              onChange={handleInputChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
             <LoadingButton
-              variant="outlined"
-              type="submit"
-              disableElevation
-              fullWidth
+              onClick={submitSchemaForm}
+              autoFocus
+              disabled={Boolean(errorMessage)}
             >
-              Save
+              Execute
             </LoadingButton>
-          </div>
-        </form>
-      </Drawer>
+          </DialogActions>
+        </Dialog>
+      </form>
     );
   };
+
+  useEffect(() => {
+    try {
+      if (open && text) {
+        const parsed = JSON.parse(text);
+        setInitialValue(parsed);
+        setFinalValue(parsed);
+      } else {
+        setInitialValue({});
+        setFinalValue({});
+        setErrorMessage('');
+      }
+    } catch (e) {}
+  }, [open, text]);
 
   return renderSchemaWizard();
 };
