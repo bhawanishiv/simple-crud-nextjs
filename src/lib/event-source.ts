@@ -43,8 +43,8 @@ export class CustomEventService {
       this.listeners[type] = [];
     }
 
-    if (this.listeners[type].indexOf(listener) === -1) {
-      this.listeners[type].push(listener);
+    if (this.listeners[type]?.indexOf(listener) === -1) {
+      this.listeners[type]?.push(listener);
     }
   }
 
@@ -54,7 +54,7 @@ export class CustomEventService {
     }
 
     const filtered: any[] = [];
-    this.listeners[type].forEach(function (element) {
+    this.listeners[type]?.forEach(function (element) {
       if (element !== listener) {
         filtered.push(element);
       }
@@ -66,14 +66,14 @@ export class CustomEventService {
     }
   }
 
-  dispatchEvent(e?: CustomEvent | null) {
+  dispatchEvent(e?: any) {
     if (!e) {
       return true;
     }
 
     e.source = this;
 
-    const onHandler = 'on' + e.type;
+    const onHandler = ('on' + e.type) as keyof CustomEventService;
     if (this.hasOwnProperty(onHandler)) {
       this[onHandler].call(this, e);
       if (e.defaultPrevented) {
@@ -81,8 +81,8 @@ export class CustomEventService {
       }
     }
 
-    if (this.listeners[e.type]) {
-      return this.listeners[e.type].every(function (callback) {
+    if (this.listeners[e.type as Events]) {
+      return this.listeners[e.type as Events]?.every(function (callback: any) {
         callback(e);
         return !e.defaultPrevented;
       });
@@ -92,13 +92,13 @@ export class CustomEventService {
 
   _setReadyState(state: EventServiceState) {
     const event = new CustomEvent('readystatechange');
-    event.readyState = state;
+    (event as any).readyState = state;
     this.dispatchEvent(event);
   }
 
   _onStreamFailure(e: any) {
     const event = new CustomEvent('error');
-    event.data = e.currentTarget.response;
+    (event as any).data = e.currentTarget.response;
     this.dispatchEvent(event);
     this.close();
   }
@@ -154,7 +154,14 @@ export class CustomEventService {
       return null;
     }
 
-    const e = { id: null, retry: null, data: '', event: 'message' };
+    type EKeys = 'id' | 'retry' | 'data' | 'event';
+    const e: { [key in EKeys]: any } = {
+      id: null,
+      retry: null,
+      data: '',
+      event: 'message',
+    };
+
     chunk.split(/\n|\r\n|\r/).forEach(
       function (line: string) {
         line = line.trimRight();
@@ -174,14 +181,14 @@ export class CustomEventService {
         if (field === 'data') {
           e[field] += value;
         } else {
-          e[field] = value;
+          e[field as EKeys] = value;
         }
       }.bind(this)
     );
 
     const event = new CustomEvent(e.event);
-    event.data = e.data;
-    event.id = e.id;
+    (event as any).data = e.data;
+    (event as any).id = e.id;
     return event;
   }
 

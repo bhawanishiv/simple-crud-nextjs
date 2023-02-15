@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import JSONInput from 'react-json-editor-ajrm';
+//@ts-ignore
 import locale from 'react-json-editor-ajrm/locale/en';
 
 import LoadingButton from '@mui/lab/LoadingButton';
