@@ -4,10 +4,6 @@ import { useForm } from 'react-hook-form';
 
 import cx from 'classnames';
 import moment from 'moment';
-import {
-  fetchEventSource,
-  EventStreamContentType,
-} from '@microsoft/fetch-event-source';
 
 import Snackbar from '@mui/material/Snackbar';
 import CircularProgress from '@mui/material/CircularProgress';
