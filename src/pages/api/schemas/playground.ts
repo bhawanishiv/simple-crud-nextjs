@@ -144,8 +144,6 @@ const createSchemaAndFields = async (
  *                          items:
  *                            type: object
  *                            $ref: '#/components/schemas/IDynamicSchemaField'
- *        404:
- *          description: Results error if schema id is incorrect
  *        400:
  *          description: Error, for any invalid input
  *
