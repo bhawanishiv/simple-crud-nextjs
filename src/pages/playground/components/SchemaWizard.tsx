@@ -30,36 +30,38 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
   const [initialValue, setInitialValue] = useState({});
   const [finalValue, setFinalValue] = useState(initialValue);
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const submitSchemaForm = async () => {
     try {
       //
-      console.log(`finalValue->`, finalValue);
+      setLoading(true);
       const res = await api.request(
         '/api/schemas/playground',
         'POST',
         finalValue
       );
-      console.log(`res->`, res);
+
       const data = await res.json();
-      console.log(`data->`, data);
+
       if (!res.ok) throw new Error(data?.message);
 
       if (!data) throw new Error();
       await onSuccess(data);
     } catch (e: any) {
       //
-      console.log(`e->`, e);
       setErrorMessage(e?.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleClose = (e: any) => {
+    if (loading) return;
     onClose(e);
   };
 
   const handleInputChange = (params: any) => {
-    console.log(params);
     setErrorMessage(params.error ? 'Something is wrong' : '');
     setFinalValue(params.jsObject);
   };
@@ -72,6 +74,7 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
             Schema wizard
             {onClose ? (
               <IconButton
+                disabled={loading}
                 aria-label="close"
                 onClick={onClose}
                 sx={{
@@ -104,6 +107,7 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
             <Button onClick={handleClose}>Cancel</Button>
             <LoadingButton
               onClick={submitSchemaForm}
+              loading={loading}
               autoFocus
               disabled={Boolean(errorMessage)}
             >
@@ -125,6 +129,7 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
         setInitialValue({});
         setFinalValue({});
         setErrorMessage('');
+        setLoading(false);
       }
     } catch (e) {}
   }, [open, text]);

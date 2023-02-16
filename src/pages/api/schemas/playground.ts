@@ -23,7 +23,7 @@ const CreateDynamicSchemaAndFieldsSchema = z.object({
       type: FieldTypeEnum,
       unique: z.boolean().optional(),
       required: z.boolean().optional(),
-      relatedSchema: z.string().optional(),
+      relatedSchema: z.string().trim().optional(),
       relationType: RelatedTypeEnum.optional(),
       options: z.array(z.string().trim()).optional(),
       default: z
@@ -64,8 +64,6 @@ const createSchemaAndFields = async (
       { upsert: true, returnDocument: 'after' }
     );
 
-    console.log(`schemaRes->`, schemaRes);
-
     if (!schemaRes) {
       return res
         .status(500)
@@ -99,20 +97,43 @@ const createSchemaAndFields = async (
       };
     });
 
-    const newFields = await DynamicSchemaField.insertMany(formattedFields, {
-      // ordered: false,
-    });
+    const newFields = await DynamicSchemaField.insertMany(formattedFields, {});
 
     if (!newFields) throw new Error("Couldn't create fields");
-    return res.json({
+
+    const relatedSchemas = formattedFields
+      .filter((field) => field.type === 'related' && field.relatedSchema)
+      .map((field) => {
+        const schemaName = _.capitalize(_.camelCase(field.relatedSchema));
+        return {
+          updateOne: {
+            filter: {
+              name: schemaName,
+            },
+            update: {
+              name: schemaName,
+              title: field.relatedSchema,
+            },
+            upsert: true,
+          },
+        };
+      });
+
+    const response: { [key: string]: any } = {
       schema: schemaRes,
       fields: newFields.map((field) => ({
         ...field.toJSON(),
         id: field._id.toString(),
       })),
-    });
+    };
+
+    if (relatedSchemas.length) {
+      const newSchemas = await DynamicSchema.bulkWrite(relatedSchemas);
+      if (!newSchemas) throw new Error("Couldn't create referenced schemas");
+    }
+
+    return res.json(response);
   } catch (e) {
-    console.log(`e->`, e);
     if (e instanceof ZodError) {
       return res.status(400).json(e.errors[0]);
     }
