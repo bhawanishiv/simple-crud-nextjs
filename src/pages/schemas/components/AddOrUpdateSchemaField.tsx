@@ -270,7 +270,6 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
   };
 
   const renderListTypeFieldOptions = () => {
-    console.log(`fieldType->`, fieldType);
     if (fieldType !== 'list') return null;
 
     return (

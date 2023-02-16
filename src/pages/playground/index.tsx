@@ -244,7 +244,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         },
       });
     } catch (e) {
-      console.log(`e->`, e);
+      // console.log(`e->`, e);
     }
   };
 
