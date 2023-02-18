@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 
@@ -12,7 +12,6 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
-import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 
 import { CustomEventService } from '@/lib/event-source';
@@ -146,12 +145,12 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
   const {} = props;
 
   const router = useRouter();
-  const ctrlRef = useRef<any>(null);
 
   const [count, setCount] = useState<number>(-1);
-  const [queries, setQueries] = useState<any[]>([]);
   const [choices, setChoices] = useState<any[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [pendingIndices, setPendingIndices] = useState<number[]>([]);
 
   const [currentChoiceIndex, setCurrentChoiceIndex] = useState<number>(-1);
   const { formState, register, handleSubmit } = useForm({});
@@ -179,6 +178,66 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
     setCurrentChoiceIndex(-1);
   };
 
+  const handleContinueResponse = (choice: any, index: number) => async () => {
+    try {
+      setLoading(true);
+      const { text, prompt } = choice;
+      const newPrompt = `${INPUT_MODEL}
+      ${prompt}
+      ${text}
+      `;
+
+      const payload = {
+        model: 'text-davinci-003',
+        stream: true,
+        temperature: 0,
+        max_tokens: 256,
+        prompt: newPrompt,
+      };
+
+      await getResultsXhr({
+        payload,
+        onEnd: () => {
+          setPendingIndices((indices) => [...indices, index]);
+        },
+        onError: () => {
+          setChoices((prevChoices) => {
+            let newChoices = [...prevChoices];
+            newChoices[index] = {
+              ...newChoices[index],
+              failed: true,
+            };
+            return newChoices;
+          });
+          setLoading(false);
+        },
+        onMessage: (msg: any) => {
+          const { choices: resChoices } = JSON.parse(msg.data);
+
+          if (resChoices.length) {
+            const text = resChoices[0].text;
+            setChoices((prevChoices) => {
+              let newChoices = [...prevChoices];
+              if (newChoices[index]) {
+                const newText = newChoices[index].text + text;
+                newChoices[index] = {
+                  ...newChoices[index],
+                  data: [...newChoices[index].data, text],
+                  text: newText,
+                };
+              }
+              return newChoices;
+            });
+          }
+        },
+      });
+    } catch (e: any) {
+      // console.log(`e->`, e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePlaygroundInputSubmit = async (values: any) => {
     try {
       const now = moment();
@@ -186,7 +245,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         model: 'text-davinci-003',
         stream: true,
         temperature: 0,
-        max_tokens: 1000,
+        max_tokens: 256,
         prompt: `${INPUT_MODEL}
         ${values.text}
         `,
@@ -197,14 +256,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
       await getResultsXhr({
         payload,
         onEnd: () => {
-          setChoices((prevChoices) => {
-            let newChoices = [...prevChoices];
-            newChoices[newCount] = {
-              ...newChoices[newCount],
-              completed: true,
-            };
-            return newChoices;
-          });
+          setPendingIndices((indices) => [...indices, newCount]);
         },
         onError: () => {
           setChoices((prevChoices) => {
@@ -246,6 +298,49 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
     } catch (e) {
       // console.log(`e->`, e);
     }
+  };
+
+  const renderAction = (choice: any, index: number) => {
+    if (loading) return null;
+
+    if (choice.pending) {
+      return (
+        <div className="flex">
+          <div className="flex items-center gap-3 rounded-full py-2 px-4 border border-gray">
+            <Typography className="text-md">See more</Typography>
+            <Typography className="text-xs">
+              Click to see more response for this query
+            </Typography>
+            <div>
+              <IconButton onClick={handleContinueResponse(choice, index)}>
+                <ArrowForwardOutlinedIcon />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (choice.completed) {
+      return (
+        <div className="flex">
+          <div className="flex items-center gap-3 rounded-full py-2 px-4 border border-gray">
+            <div>
+              <Typography className="text-md">
+                Execute this statement
+              </Typography>
+              <Typography className="text-sm">{choice.prompt}</Typography>
+            </div>
+            <div>
+              <IconButton onClick={handleRunSchemaWizard(choice, index)}>
+                <ArrowForwardOutlinedIcon />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   const renderPlaygroundPage = () => {
@@ -301,27 +396,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
                             );
                           })}
                         </div>
-                        {choice.completed && (
-                          <div className="flex">
-                            <div className="flex items-center gap-3 rounded-full py-2 px-4 border border-gray">
-                              <div>
-                                <Typography className="text-md">
-                                  Execute this statement
-                                </Typography>
-                                <Typography className="text-sm">
-                                  {choice.prompt}
-                                </Typography>
-                              </div>
-                              <div>
-                                <IconButton
-                                  onClick={handleRunSchemaWizard(choice, i)}
-                                >
-                                  <ArrowForwardOutlinedIcon />
-                                </IconButton>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                        {renderAction(choice, i)}
                       </div>
                     </li>
                   );
@@ -338,11 +413,11 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
                 />
                 <div className="px-2">
                   <IconButton
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || loading}
                     color="primary"
                     type="submit"
                   >
-                    {isSubmitting ? (
+                    {isSubmitting || loading ? (
                       <CircularProgress size={16} />
                     ) : (
                       <SendOutlinedIcon />
@@ -364,11 +439,30 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
   };
 
   useEffect(() => {
-    ctrlRef.current = new AbortController();
-    return () => {
-      ctrlRef.current?.abort();
-    };
-  }, []);
+    if (!pendingIndices.length) return;
+    const lastEndIndex = pendingIndices[pendingIndices.length - 1];
+    if (lastEndIndex > -1) {
+      let pending = true;
+      try {
+        JSON.parse(choices[lastEndIndex].text);
+        pending = false;
+      } catch (e: any) {
+        // console.log(`e->`, e);
+      } finally {
+        setChoices((prevChoices) => {
+          let newChoices = [...prevChoices];
+          newChoices[lastEndIndex] = {
+            ...newChoices[lastEndIndex],
+            completed: true,
+            pending,
+          };
+          return newChoices;
+        });
+      }
+    }
+    return () => {};
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingIndices]);
 
   return renderPlaygroundPage();
 };
