@@ -117,9 +117,9 @@ const getResultsXhr = ({
       body: JSON.stringify(payload),
     });
 
-    se.addEventListener('message', (msg: any) => {
+    se.addEventListener('message', async (msg: any) => {
       if (msg.data === '[DONE]') {
-        onEnd(msg);
+        await onEnd(msg);
         se.close();
 
         resolve(se);
@@ -178,26 +178,28 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
     setCurrentChoiceIndex(-1);
   };
 
-  const handleContinueResponse = (choice: any, index: number) => async () => {
+  const playgroundResponseHandlers = async ({
+    query,
+    prompt,
+    index,
+  }: {
+    index: number;
+    query: string;
+    prompt: string;
+  }) => {
     try {
       setLoading(true);
-      const { text, prompt } = choice;
-      const newPrompt = `${INPUT_MODEL}
-      ${prompt}
-      ${text}
-      `;
-
       const payload = {
         model: 'text-davinci-003',
         stream: true,
         temperature: 0,
         max_tokens: 256,
-        prompt: newPrompt,
+        prompt,
       };
 
       await getResultsXhr({
         payload,
-        onEnd: () => {
+        onEnd: async () => {
           setPendingIndices((indices) => [...indices, index]);
         },
         onError: () => {
@@ -218,7 +220,16 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
             const text = resChoices[0].text;
             setChoices((prevChoices) => {
               let newChoices = [...prevChoices];
-              if (newChoices[index]) {
+              if (!newChoices[index]) {
+                const now = moment();
+
+                newChoices[index] = {
+                  query,
+                  data: [text],
+                  text,
+                  createdAt: now.format('LLL'),
+                };
+              } else {
                 const newText = newChoices[index].text + text;
                 newChoices[index] = {
                   ...newChoices[index],
@@ -231,69 +242,60 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
           }
         },
       });
-    } catch (e: any) {
-      // console.log(`e->`, e);
-    } finally {
+    } catch (e) {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingResponse = async ({
+    lastEndIndex,
+  }: {
+    lastEndIndex: number;
+  }) => {
+    let responseCompleted = false;
+    let completed = true;
+    try {
+      JSON.parse(choices[lastEndIndex].text);
+      responseCompleted = true;
+      setLoading(false);
+    } catch (e) {
+      // throw new Error('');
+      completed = false;
+    } finally {
+      setChoices((prevChoices) => {
+        let newChoices = [...prevChoices];
+        newChoices[lastEndIndex] = {
+          ...newChoices[lastEndIndex],
+          pending: !responseCompleted,
+          completed,
+        };
+        return newChoices;
+      });
+      if (!responseCompleted) {
+        const { text, query } = choices[lastEndIndex];
+        const newPrompt = `${INPUT_MODEL}
+        ${query}
+        ${text}`;
+
+        await playgroundResponseHandlers({
+          query,
+          prompt: newPrompt,
+          index: lastEndIndex,
+        });
+      }
     }
   };
 
   const handlePlaygroundInputSubmit = async (values: any) => {
     try {
-      const now = moment();
-      const payload = {
-        model: 'text-davinci-003',
-        stream: true,
-        temperature: 0,
-        max_tokens: 256,
-        prompt: `${INPUT_MODEL}
-        ${values.text}
-        `,
-      };
       let newCount = count + 1;
       setCount(newCount);
 
-      await getResultsXhr({
-        payload,
-        onEnd: () => {
-          setPendingIndices((indices) => [...indices, newCount]);
-        },
-        onError: () => {
-          setChoices((prevChoices) => {
-            let newChoices = [...prevChoices];
-            newChoices[newCount] = {
-              ...newChoices[newCount],
-              failed: true,
-            };
-            return newChoices;
-          });
-        },
-        onMessage: (msg: any) => {
-          const { choices: resChoices } = JSON.parse(msg.data);
-
-          if (resChoices.length) {
-            const text = resChoices[0].text;
-            setChoices((prevChoices) => {
-              let newChoices = [...prevChoices];
-              if (!newChoices[newCount]) {
-                newChoices[newCount] = {
-                  prompt: values.text,
-                  data: [text],
-                  text,
-                  createdAt: now.format('LLL'),
-                };
-              } else {
-                const newText = newChoices[newCount].text + text;
-                newChoices[newCount] = {
-                  ...newChoices[newCount],
-                  data: [...newChoices[newCount].data, text],
-                  text: newText,
-                };
-              }
-              return newChoices;
-            });
-          }
-        },
+      await playgroundResponseHandlers({
+        query: values.text,
+        index: newCount,
+        prompt: `${INPUT_MODEL}
+      ${values.text}`,
       });
     } catch (e) {
       // console.log(`e->`, e);
@@ -301,25 +303,25 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
   };
 
   const renderAction = (choice: any, index: number) => {
-    if (loading) return null;
+    if (loading || choice.failed) return null;
 
-    if (choice.pending) {
-      return (
-        <div className="flex">
-          <div className="flex items-center gap-3 rounded-full py-2 px-4 border border-gray">
-            <Typography className="text-md">See more</Typography>
-            <Typography className="text-xs">
-              Click to see more response for this query
-            </Typography>
-            <div>
-              <IconButton onClick={handleContinueResponse(choice, index)}>
-                <ArrowForwardOutlinedIcon />
-              </IconButton>
-            </div>
-          </div>
-        </div>
-      );
-    }
+    // if (choice.pending) {
+    //   return (
+    //     <div className="flex">
+    //       <div className="flex items-center gap-3 rounded-full py-2 px-4 border border-gray">
+    //         <Typography className="text-md">See more</Typography>
+    //         <Typography className="text-xs">
+    //           Click to see more response for this query
+    //         </Typography>
+    //         <div>
+    //           <IconButton onClick={handleContinueResponse(choice, index)}>
+    //             <ArrowForwardOutlinedIcon />
+    //           </IconButton>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   );
+    // }
     if (choice.completed) {
       return (
         <div className="flex">
@@ -328,7 +330,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
               <Typography className="text-md">
                 Execute this statement
               </Typography>
-              <Typography className="text-sm">{choice.prompt}</Typography>
+              <Typography className="text-sm">{choice.query}</Typography>
             </div>
             <div>
               <IconButton onClick={handleRunSchemaWizard(choice, index)}>
@@ -378,7 +380,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
                           component={'h3'}
                           className={'text-xl font-body'}
                         >
-                          {choice.prompt}
+                          {choice.query}
                         </Typography>
                         <Typography className="text-sm">
                           {choice.createdAt}
@@ -442,23 +444,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
     if (!pendingIndices.length) return;
     const lastEndIndex = pendingIndices[pendingIndices.length - 1];
     if (lastEndIndex > -1) {
-      let pending = true;
-      try {
-        JSON.parse(choices[lastEndIndex].text);
-        pending = false;
-      } catch (e: any) {
-        // console.log(`e->`, e);
-      } finally {
-        setChoices((prevChoices) => {
-          let newChoices = [...prevChoices];
-          newChoices[lastEndIndex] = {
-            ...newChoices[lastEndIndex],
-            completed: true,
-            pending,
-          };
-          return newChoices;
-        });
-      }
+      fetchPendingResponse({ lastEndIndex });
     }
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
