@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-
+import z, { ZodError } from 'zod';
 import JSONInput from 'react-json-editor-ajrm';
 //@ts-ignore
 import locale from 'react-json-editor-ajrm/locale/en';
+import _ from 'lodash';
 
 import LoadingButton from '@mui/lab/LoadingButton';
 import Typography from '@mui/material/Typography';
@@ -15,7 +16,40 @@ import IconButton from '@mui/material/IconButton';
 
 import CloseIcon from '@mui/icons-material/Close';
 
+import { FieldTypeEnum, RelatedTypeEnum } from '@/interfaces/DynamicSchema';
+
 import api from '@/services/api';
+
+const SchemaWizardSchema = z.object({
+  schema: z.object({
+    title: z.string().trim(),
+    name: z
+      .string()
+      .trim()
+      .transform((v) => _.capitalize(_.camelCase(v))),
+  }),
+  fields: z.array(
+    z.object({
+      title: z.string().trim(),
+      name: z.string().trim().optional().transform(_.camelCase),
+      type: FieldTypeEnum,
+      unique: z.boolean().optional(),
+      required: z.boolean().optional(),
+      relatedSchema: z.string().trim().optional(),
+      relationType: RelatedTypeEnum.optional(),
+      options: z.array(z.string().trim()).optional(),
+      default: z
+        .union([
+          z.string().trim(),
+          z.null(),
+          z.boolean(),
+          z.number(),
+          z.array(z.string().trim()),
+        ])
+        .optional(),
+    })
+  ),
+});
 
 type SchemaWizardProps = {
   text?: string;
@@ -36,6 +70,8 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
     try {
       //
       setLoading(true);
+      SchemaWizardSchema.parse(finalValue);
+
       const res = await api.request(
         '/api/schemas/playground',
         'POST',
@@ -49,8 +85,9 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
       if (!data) throw new Error();
       await onSuccess(data);
     } catch (e: any) {
-      //
-      setErrorMessage(e?.message || 'Something went wrong');
+      if (e instanceof ZodError) {
+        setErrorMessage(e.errors[0].message);
+      } else setErrorMessage(e.message || 'Something is wrong');
     } finally {
       setLoading(false);
     }
@@ -64,6 +101,13 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
   const handleInputChange = (params: any) => {
     setErrorMessage(params.error ? 'Something is wrong' : '');
     setFinalValue(params.jsObject);
+    try {
+      SchemaWizardSchema.parse(params.jsObject);
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        setErrorMessage(e.errors[0].message);
+      } else setErrorMessage(e.message || 'Something is wrong');
+    }
   };
 
   const renderSchemaWizard = () => {
