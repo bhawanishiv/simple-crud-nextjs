@@ -211,7 +211,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
             };
             return newChoices;
           });
-          throw new Error('');
+          setLoading(false);
         },
         onMessage: (msg: any) => {
           const { choices: resChoices } = JSON.parse(msg.data);
@@ -303,7 +303,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
   };
 
   const renderAction = (choice: any, index: number) => {
-    if (loading) return null;
+    if (loading || choice.failed) return null;
 
     // if (choice.pending) {
     //   return (
