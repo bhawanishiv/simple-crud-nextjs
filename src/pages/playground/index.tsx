@@ -24,6 +24,7 @@ const OPENAPI_API_ENDPOINT = 'https://api.openai.com/v1/completions';
 
 const INPUT_MODEL = `
 generate a schema to track software bugs.
+
 {
   "schema":{
     "name" : "Bug",
