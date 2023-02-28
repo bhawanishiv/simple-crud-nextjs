@@ -7,6 +7,8 @@ import moment from 'moment';
 
 import Snackbar from '@mui/material/Snackbar';
 import CircularProgress from '@mui/material/CircularProgress';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
@@ -147,6 +149,8 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
 
   const router = useRouter();
 
+  const [withContext, setWithContext] = useState(true);
+
   const [count, setCount] = useState<number>(-1);
   const [choices, setChoices] = useState<any[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -160,6 +164,10 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
 
   const handleNavigateToSchemasPage = () => {
     router.push('/schemas');
+  };
+
+  const handleChangeResponseContext = (event: any) => {
+    setWithContext(event.target.checked);
   };
 
   const handleSnackbarClose = () => {
@@ -275,9 +283,11 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
       if (!responseCompleted) {
         let prompts = [INPUT_MODEL];
 
-        for (let choice of choices) {
-          prompts.push(choice.query);
-          prompts.push(choice.text);
+        if (withContext) {
+          for (let choice of choices) {
+            prompts.push(choice.query);
+            prompts.push(choice.text);
+          }
         }
 
         const { text, query } = choices[lastEndIndex];
@@ -305,9 +315,11 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
 
       let prompts = [INPUT_MODEL];
 
-      for (let choice of choices) {
-        prompts.push(choice.query);
-        prompts.push(choice.text);
+      if (withContext) {
+        for (let choice of choices) {
+          prompts.push(choice.query);
+          prompts.push(choice.text);
+        }
       }
 
       prompts.push(values.text);
@@ -427,6 +439,13 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
           </div>
           <form onSubmit={handleSubmit(handlePlaygroundInputSubmit)}>
             <div className="px-6 py-4">
+              <FormControlLabel
+                disabled={isSubmitting || loading}
+                checked={withContext}
+                onChange={handleChangeResponseContext}
+                control={<Checkbox />}
+                label="Query on previous responses"
+              />
               <div className="flex items-center rounded-full border border-gray overflow-hidden">
                 <input
                   placeholder="e.g. Create a schema to manage Customers"
