@@ -7,6 +7,8 @@ import moment from 'moment';
 
 import Snackbar from '@mui/material/Snackbar';
 import CircularProgress from '@mui/material/CircularProgress';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
@@ -23,7 +25,7 @@ const OPENAPI_API_KEY = process.env.NEXT_PUBLIC_OPENAPI_API_KEY;
 const OPENAPI_API_ENDPOINT = 'https://api.openai.com/v1/completions';
 
 const INPUT_MODEL = `
-generate a schema to track software bugs.
+generate a schema to track software bugs
 
 {
   "schema":{
@@ -147,6 +149,8 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
 
   const router = useRouter();
 
+  const [withContext, setWithContext] = useState(true);
+
   const [count, setCount] = useState<number>(-1);
   const [choices, setChoices] = useState<any[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -160,6 +164,10 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
 
   const handleNavigateToSchemasPage = () => {
     router.push('/schemas');
+  };
+
+  const handleChangeResponseContext = (event: any) => {
+    setWithContext(event.target.checked);
   };
 
   const handleSnackbarClose = () => {
@@ -273,14 +281,27 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         return newChoices;
       });
       if (!responseCompleted) {
+        let prompts = [INPUT_MODEL];
+
+        if (withContext) {
+          for (let choice of choices) {
+            prompts.push(choice.query);
+            prompts.push(choice.text);
+          }
+        }
+
         const { text, query } = choices[lastEndIndex];
-        const newPrompt = `${INPUT_MODEL}
-        ${query}
-        ${text}`;
+
+        prompts.push(query);
+        prompts.push(text);
+
+        // const newPrompt = `${INPUT_MODEL}
+        // ${query}
+        // ${text}`;
 
         await playgroundResponseHandlers({
           query,
-          prompt: newPrompt,
+          prompt: prompts.join('\n'),
           index: lastEndIndex,
         });
       }
@@ -292,11 +313,21 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
       let newCount = count + 1;
       setCount(newCount);
 
+      let prompts = [INPUT_MODEL];
+
+      if (withContext) {
+        for (let choice of choices) {
+          prompts.push(choice.query);
+          prompts.push(choice.text);
+        }
+      }
+
+      prompts.push(values.text);
+
       await playgroundResponseHandlers({
         query: values.text,
         index: newCount,
-        prompt: `${INPUT_MODEL}
-      ${values.text}`,
+        prompt: prompts.join('\n'),
       });
     } catch (e) {
       // console.log(`e->`, e);
@@ -408,6 +439,13 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
           </div>
           <form onSubmit={handleSubmit(handlePlaygroundInputSubmit)}>
             <div className="px-6 py-4">
+              <FormControlLabel
+                disabled={isSubmitting || loading}
+                checked={withContext}
+                onChange={handleChangeResponseContext}
+                control={<Checkbox />}
+                label="Query on previous responses"
+              />
               <div className="flex items-center rounded-full border border-gray overflow-hidden">
                 <input
                   placeholder="e.g. Create a schema to manage Customers"

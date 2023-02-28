@@ -228,16 +228,20 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
   const renderSchemaPage = () => {
     if (isLoadingInitialData || isLoading) {
       return (
-        <div>
-          <CircularProgress size={16} />
+        <div className="flex flex-col items-center justify-center h-screen w-screen">
+          <div>
+            <CircularProgress size={16} />
+          </div>
         </div>
       );
     }
 
     if (!data) {
       return (
-        <div>
-          <Typography>Not found</Typography>
+        <div className="flex flex-col items-center justify-center h-screen w-screen">
+          <div>
+            <Typography>Not found</Typography>
+          </div>
         </div>
       );
     }
