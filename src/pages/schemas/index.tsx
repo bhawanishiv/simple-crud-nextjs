@@ -68,8 +68,18 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
   };
 
   const renderSchemasPage = () => {
-    if (isLoading) return <CircularProgress size={16} />;
-    if (!data) return <div>Not found</div>;
+    if (isLoading)
+      return (
+        <div className="flex flex-col items-center justify-center h-screen w-screen">
+          <CircularProgress size={16} />
+        </div>
+      );
+    if (!data)
+      return (
+        <div className="flex flex-col items-center justify-center h-screen w-screen">
+          <div>Not found</div>
+        </div>
+      );
     const { count, schemas } = data;
     return (
       <div>

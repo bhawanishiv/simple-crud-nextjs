@@ -125,8 +125,10 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
   const renderSchemaDetailsContainer = () => {
     if (isLoading)
       return (
-        <div>
-          <CircularProgress size={16} />
+        <div className="flex flex-col items-center justify-center h-screen w-screen">
+          <div>
+            <CircularProgress size={16} />
+          </div>
         </div>
       );
 
