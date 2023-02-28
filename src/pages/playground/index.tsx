@@ -23,7 +23,7 @@ const OPENAPI_API_KEY = process.env.NEXT_PUBLIC_OPENAPI_API_KEY;
 const OPENAPI_API_ENDPOINT = 'https://api.openai.com/v1/completions';
 
 const INPUT_MODEL = `
-generate a schema to track software bugs.
+generate a schema to track software bugs
 
 {
   "schema":{
@@ -273,14 +273,25 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         return newChoices;
       });
       if (!responseCompleted) {
+        let prompts = [INPUT_MODEL];
+
+        for (let choice of choices) {
+          prompts.push(choice.query);
+          prompts.push(choice.text);
+        }
+
         const { text, query } = choices[lastEndIndex];
-        const newPrompt = `${INPUT_MODEL}
-        ${query}
-        ${text}`;
+
+        prompts.push(query);
+        prompts.push(text);
+
+        // const newPrompt = `${INPUT_MODEL}
+        // ${query}
+        // ${text}`;
 
         await playgroundResponseHandlers({
           query,
-          prompt: newPrompt,
+          prompt: prompts.join('\n'),
           index: lastEndIndex,
         });
       }
@@ -292,11 +303,19 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
       let newCount = count + 1;
       setCount(newCount);
 
+      let prompts = [INPUT_MODEL];
+
+      for (let choice of choices) {
+        prompts.push(choice.query);
+        prompts.push(choice.text);
+      }
+
+      prompts.push(values.text);
+
       await playgroundResponseHandlers({
         query: values.text,
         index: newCount,
-        prompt: `${INPUT_MODEL}
-      ${values.text}`,
+        prompt: prompts.join('\n'),
       });
     } catch (e) {
       // console.log(`e->`, e);
