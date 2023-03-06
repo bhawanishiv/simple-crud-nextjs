@@ -1,3 +1,5 @@
+import { AbortSignal } from './abort-controller';
+
 type EventServiceHeaders = { [key: string]: any };
 type EventServiceState = 'initialized' | 'connecting' | 'open' | 'closed';
 type HttpRequestMethod = 'GET' | 'POST';
@@ -9,6 +11,8 @@ export type EventServiceOptions = {
   body?: any;
   method: HttpRequestMethod;
   withCredentials?: boolean;
+  signal?: AbortSignal;
+  xhr?: XMLHttpRequest;
 };
 
 const FIELD_SEPARATOR = ':';
@@ -36,6 +40,14 @@ export class CustomEventService {
     this.progress = 0;
     this.chunk = '';
     this.listeners = {};
+
+    if (options.signal) {
+      options.signal?.addEventListener('abort', this.abort);
+    }
+  }
+
+  abort() {
+    this.xhr?.abort();
   }
 
   addEventListener(type: Events, listener: (...params: any[]) => any) {

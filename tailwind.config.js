@@ -11,6 +11,9 @@ module.exports = {
         secondary: '#19857b',
         'on-secondary': '#FFFFFF',
         gray: '#dbdbdb',
+        background: '#ffffff',
+        'background-light': '#F0EEED',
+        'on-background-light': '#747474',
       },
       animation: {
         type: 'type 1.8s ease-out .8s 1 normal both',
