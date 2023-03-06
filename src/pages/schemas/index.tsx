@@ -140,7 +140,7 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
               })}
             </List>
           </div>
-          <div className="w-4/5 p-3">
+          <div className="w-4/5 px-3">
             {schemas[currentSchema] && (
               <SchemaDetails schema={schemas[currentSchema]} />
             )}

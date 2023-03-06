@@ -16,131 +16,10 @@ import Button from '@mui/material/Button';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 
-import { CustomEventService } from '@/lib/event-source';
+import { BASE_INPUT_MODEL_PROMPT } from '@/lib/constants';
+import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
 
 import SchemaWizard from './components/SchemaWizard';
-
-const OPENAPI_API_KEY = process.env.NEXT_PUBLIC_OPENAPI_API_KEY;
-
-const OPENAPI_API_ENDPOINT = 'https://api.openai.com/v1/completions';
-
-const INPUT_MODEL = `
-generate a schema to track software bugs
-
-{
-  "schema":{
-    "name" : "Bug",
-    "title" : "Bug"    
-  },
-  "fields": [
-    {
-        "name" : "title",
-        "title" : "Title",
-        "type"  : "text",
-        "required" : true
-    },
-    {
-        "name" : "description",
-        "title" : "Description",
-        "type" : "multi-text"        
-    },
-    {
-        "name" : "completed",
-        "title" : "Completed",
-        "type" : "boolean"        
-    },
-    {
-        "name" : "reportedAt",
-        "title" : "Reported at",
-        "type" : "date"        
-    },
-    {
-        "name" : "priority",
-        "title" : "Priority",
-        "type"  : "list",
-        "required" : true,
-        "options" : ["High","Medium","Low"],
-        "defaultValue" : "Medium"
-    },
-    {
-        "name" : "companiesEnvolved",
-        "title" : "Companies Envolved",
-        "type" : "related",
-        "relatedSchema" : "Company",
-        "relationType" : "hasMany"
-    }
-  ]
-}
-`;
-
-//REST method for printing results
-// const getResults = async ({ text }: { text: string }) => {
-//   const payload = {
-//     model: 'text-davinci-003',
-//     temperature: 0,
-//     max_tokens: 1000,
-//     prompt: `${INPUT_MODEL}
-//     ${text}
-//     `,
-//   };
-
-//   const body = JSON.stringify(payload);
-
-//   const res = await fetch(OPENAPI_API_ENDPOINT, {
-//     method: 'POST',
-//     headers: {
-//       Authorization: `Bearer ${OPENAPI_API_KEY}`,
-//       'Content-Type': 'application/json',
-//     },
-//     body,
-//   });
-//   if (!res.ok) throw new Error();
-//   const data = await res.json();
-//   return data;
-// };
-
-const getResultsXhr = ({
-  payload,
-  onMessage,
-  onEnd,
-  onError,
-}: {
-  payload: any;
-  onMessage: (d?: any) => any;
-  onEnd: (d?: any) => any;
-  onError: (d?: any) => any;
-}) => {
-  return new Promise((resolve, reject) => {
-    const se = new CustomEventService(OPENAPI_API_ENDPOINT, {
-      headers: {
-        Authorization: `Bearer ${OPENAPI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-
-    se.addEventListener('message', async (msg: any) => {
-      if (msg.data === '[DONE]') {
-        await onEnd(msg);
-        se.close();
-
-        resolve(se);
-        return;
-      }
-
-      onMessage(msg);
-    });
-
-    se.addEventListener('error', (msg: any) => {
-      onError(msg);
-      se.close();
-      reject();
-    });
-
-    se.stream();
-  });
-};
 
 type PlaygroundPageProps = {};
 
@@ -206,7 +85,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         prompt,
       };
 
-      await getResultsXhr({
+      await getGPTResponseSSE({
         payload,
         onEnd: async () => {
           setPendingIndices((indices) => [...indices, index]);
@@ -264,7 +143,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
     let responseCompleted = false;
     let completed = true;
     try {
-      JSON.parse(choices[lastEndIndex].text);
+      schemaFinder(choices[lastEndIndex].text.trim());
       responseCompleted = true;
       setLoading(false);
     } catch (e) {
@@ -281,7 +160,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         return newChoices;
       });
       if (!responseCompleted) {
-        let prompts = [INPUT_MODEL];
+        let prompts = [BASE_INPUT_MODEL_PROMPT];
 
         if (withContext) {
           for (let choice of choices) {
@@ -295,7 +174,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         prompts.push(query);
         prompts.push(text);
 
-        // const newPrompt = `${INPUT_MODEL}
+        // const newPrompt = `${BASE_INPUT_MODEL_PROMPT}
         // ${query}
         // ${text}`;
 
@@ -313,7 +192,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
       let newCount = count + 1;
       setCount(newCount);
 
-      let prompts = [INPUT_MODEL];
+      let prompts = [BASE_INPUT_MODEL_PROMPT];
 
       if (withContext) {
         for (let choice of choices) {

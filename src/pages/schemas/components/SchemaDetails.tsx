@@ -6,9 +6,12 @@ import {
 } from '@/interfaces/DynamicSchema';
 
 import useSwr from 'swr';
-
 import moment from 'moment';
 
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -16,6 +19,8 @@ import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+
+import GPTChat from '@/containers/GPTChat';
 
 import AddOrUpdateSchemaField from './AddOrUpdateSchemaField';
 
@@ -56,6 +61,10 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
     setCurrentField(null);
   };
 
+  const handleUpdateByGPT = () => {
+    mutate();
+  };
+
   const renderNoDef = () => {
     return (
       <div>
@@ -71,69 +80,74 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
     const { count, fields } = data;
 
     return (
-      <div className="w-full">
+      <Grid sx={{ my: 1 }} container rowSpacing={1} columnSpacing={1}>
         {fields.map((field: IDynamicSchemaField) => {
           return (
-            <div key={field.id} className="my-2 w-full">
-              <div className="border rounded-xl py-2 px-6 w-full">
-                <div className="flex items-center gap-2">
-                  <Chip label={field.name} />
-                  <Chip
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                    label={field.type}
-                  />
+            <Grid key={field.id} item xs={6}>
+              <Card variant="outlined" className="rounded-xl">
+                <CardContent>
+                  {/* <div className="border rounded-xl py-2 px-6 w-full"> */}
+                  <div className="flex items-center gap-2">
+                    <Chip label={field.name} />
+                    <Chip
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      label={field.type}
+                    />
 
-                  <IconButton onClick={handleFieldEditClick(field)}>
-                    <EditOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </div>
-                <div className="flex items-center gap-2 pt-2">
-                  <Typography>
-                    {field.title}
-                    {field.required && (
-                      <Typography color="red" component={'span'}>
-                        {' *'}
-                      </Typography>
+                    <IconButton onClick={handleFieldEditClick(field)}>
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Typography>
+                      {field.title}
+                      {field.required && (
+                        <Typography color="red" component={'span'}>
+                          {' *'}
+                        </Typography>
+                      )}
+                    </Typography>
+                    {field.type === 'related' && (
+                      <>
+                        <Typography className="text-sm">
+                          {field.relationType}
+                        </Typography>
+                        <Typography className="text-sm" color="primary">
+                          {field.relatedSchema}
+                        </Typography>
+                      </>
                     )}
-                  </Typography>
-                  {field.type === 'related' && (
-                    <>
-                      <Typography className="text-sm">
-                        {field.relationType}
-                      </Typography>
-                      <Typography className="text-sm" color="primary">
-                        {field.relatedSchema}
-                      </Typography>
-                    </>
-                  )}
-                </div>
-                <div>
-                  <Typography className="text-xs" color="gray">
-                    {moment(field.updatedAt).format('LLL')}
-                  </Typography>
-                </div>
-              </div>
-            </div>
+                  </div>
+                  <div>
+                    <Typography className="text-xs" color="gray">
+                      {moment(field.updatedAt).format('LLL')}
+                    </Typography>
+                  </div>
+                  {/* </div> */}
+                </CardContent>
+              </Card>
+            </Grid>
           );
         })}
-      </div>
+      </Grid>
     );
   };
 
   const renderSchemaDetailsContainer = () => {
-    if (isLoading)
+    if (isLoading) {
       return (
-        <div className="flex flex-col items-center justify-center h-screen w-screen">
+        <div className="p-4">
           <div>
             <CircularProgress size={16} />
           </div>
         </div>
       );
-
+    }
+    // onSubmit
     return (
-      <div className="w-full">
+      <>
         <AddOrUpdateSchemaField
           schemaId={schema.id}
           field={typeof currentField === 'object' ? currentField : undefined}
@@ -141,15 +155,30 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
           onClose={handleAddOrUpdateFieldClose}
           onSuccess={handleAddOrUpdateFieldSuccess}
         />
-        <div className="flex items-center gap-2">
-          <div>
-            <Button onClick={handleAddFieldClick}>Add a Field</Button>
+        <div className="w-full py-2">
+          <div className="flex items-center justify-between gap-2">
+            <GPTChat
+              schema={schema}
+              fields={data?.fields || []}
+              onUpdate={handleUpdateByGPT}
+            />
+            <div className="flex items-center gap-2">
+              <div>
+                <Button
+                  className="whitespace-nowrap"
+                  onClick={handleAddFieldClick}
+                >
+                  Add a Field
+                </Button>
+              </div>
+            </div>
           </div>
-
-          {isValidating && <CircularProgress size={16} />}
+          <div className="h-[.75rem]">
+            {isValidating && <CircularProgress size={16} />}
+          </div>
+          {renderSchemaDetails()}
         </div>
-        {renderSchemaDetails()}
-      </div>
+      </>
     );
   };
 

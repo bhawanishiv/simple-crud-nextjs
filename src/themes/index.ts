@@ -21,6 +21,9 @@ const theme = createTheme({
     error: {
       main: red.A400,
     },
+    background: {
+      default: '#ffffff',
+    },
   },
   typography: {
     fontFamily: roboto.style.fontFamily,
