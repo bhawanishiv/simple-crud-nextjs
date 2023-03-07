@@ -16,6 +16,7 @@
     "@emotion/react": "^11.10.5",
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.5",
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@mui/icons-material": "^5.11.0",
     "@mui/lab": "^5.0.0-alpha.118",
     "@mui/material": "^5.11.7",
@@ -27,6 +28,7 @@
     "classnames": "^2.3.2",
     "eslint": "8.32.0",
     "eslint-config-next": "13.1.2",
+    "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "mongodb": "^4.13.0",
@@ -43,6 +45,7 @@
     "zod": "^3.20.2"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.5",
     "@types/lodash": "^4.14.191",
     "@types/react-json-editor-ajrm": "^2.5.3",
     "@types/swagger-jsdoc": "^6.0.1",

@@ -16,7 +16,7 @@ import Button from '@mui/material/Button';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 
-import { BASE_INPUT_MODEL_PROMPT } from '@/lib/constants';
+import { BASE_INPUT_MODEL_PROMPT_JSON } from '@/lib/constants';
 import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
 
 import SchemaWizard from './components/SchemaWizard';
@@ -160,7 +160,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         return newChoices;
       });
       if (!responseCompleted) {
-        let prompts = [BASE_INPUT_MODEL_PROMPT];
+        let prompts = [BASE_INPUT_MODEL_PROMPT_JSON];
 
         if (withContext) {
           for (let choice of choices) {
@@ -174,7 +174,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         prompts.push(query);
         prompts.push(text);
 
-        // const newPrompt = `${BASE_INPUT_MODEL_PROMPT}
+        // const newPrompt = `${BASE_INPUT_MODEL_PROMPT_JSON}
         // ${query}
         // ${text}`;
 
@@ -192,7 +192,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
       let newCount = count + 1;
       setCount(newCount);
 
-      let prompts = [BASE_INPUT_MODEL_PROMPT];
+      let prompts = [BASE_INPUT_MODEL_PROMPT_JSON];
 
       if (withContext) {
         for (let choice of choices) {

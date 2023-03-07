@@ -1,6 +1,6 @@
 export const OPENAPI_API_KEY = process.env.NEXT_PUBLIC_OPENAPI_API_KEY;
 
-export const BASE_INPUT_MODEL_PROMPT = `
+export const BASE_INPUT_MODEL_PROMPT_JSON = `
 generate a schema to track software bugs
 
 {
@@ -47,4 +47,40 @@ generate a schema to track software bugs
     }
   ]
 }
+`;
+
+export const BASE_INPUT_MODEL_PROMPT_YAML = `
+generate a schema for users.
+
+schema:
+      name:   "User"
+      title:  "User"
+
+fields:
+    -
+      name: "name"
+      title: "Name"
+      type:  "text"
+      required:  true
+    -
+      name: "email"
+      title: "Email address"
+      type:  "text"
+      required:  true
+      unique:  true
+    -
+      name: "role"
+      title: "Role"
+      type:  "list"
+      options:  ["USER", "ADMIN"]
+      default: "USER"
+      unique:  true
+    -
+      name: "password"
+      title: "Password"
+      type:  "related"
+      relatedSchema: "Password"
+      relationType: "hasMany"
+      unique:  true
+
 `;

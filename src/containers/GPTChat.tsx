@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-
+import {
+  fetchEventSource,
+  EventStreamContentType,
+} from '@microsoft/fetch-event-source';
 import z, { ZodError } from 'zod';
 import cx from 'classnames';
 import moment from 'moment';
 import _ from 'lodash';
+import jsYml from 'js-yaml';
 
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -14,9 +18,13 @@ import Button from '@mui/material/Button';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFilledWhiteOutlined';
 
-import { BASE_INPUT_MODEL_PROMPT } from '@/lib/constants';
+import {
+  BASE_INPUT_MODEL_PROMPT_JSON,
+  BASE_INPUT_MODEL_PROMPT_YAML,
+  OPENAPI_API_KEY,
+} from '@/lib/constants';
 import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
-import { AbortController } from '@/lib/abort-controller';
+import { fieldTypes } from '@/interfaces/DynamicSchema';
 
 import api from '@/services/api';
 
@@ -26,6 +34,25 @@ import {
   IDynamicSchemaField,
   RelatedTypeEnum,
 } from '@/interfaces/DynamicSchema';
+import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
+
+const getPromptPreText = () => {
+  return jsYml.dump({
+    fieldTypes,
+    relationTypes: ['hasOne', 'hasMany'],
+    fields: [
+      'name',
+      'title',
+      'type',
+      'required',
+      'unique',
+      'default',
+      'options',
+      'relatedSchema',
+      'relationType',
+    ],
+  });
+};
 
 const SchemaWizardSchema = z.object({
   schema: z.object({
@@ -63,6 +90,7 @@ const initialValues = {
   data: [],
   text: '',
   query: '',
+  finishReason: '',
 };
 
 type GPTChatProps = {
@@ -83,14 +111,15 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     completed?: boolean;
     pending?: boolean;
     query: string;
+    finishReason?: string;
   }>(initialValues);
   const [triggerNext, setTriggerNext] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  const [ejected, setEjected] = useState(false);
 
   const baseModel = useMemo(() => {
+    const preText = getPromptPreText();
     if (fields.length > 3) {
-      const localBaseModel = JSON.stringify(
+      const localBaseModel = jsYml.dump(
         {
           schema: {
             name: schema.name,
@@ -110,19 +139,20 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
             ])
           ),
         },
-        null,
-        '\t'
+        {}
       );
 
-      return `
-      generate a schema to track ${schema.name}.
-      
-      ${localBaseModel}
-
-      `;
+      return (
+        preText +
+        '\n\n' +
+        'generate a schema to track ' +
+        schema.name +
+        '\n\n' +
+        localBaseModel
+      );
     }
 
-    return BASE_INPUT_MODEL_PROMPT;
+    return preText + '\n' + BASE_INPUT_MODEL_PROMPT_YAML;
   }, [schema, fields]);
 
   const { formState, register, watch, handleSubmit } = useForm({});
@@ -131,7 +161,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
 
   const closePanel = () => {
     setResponse(initialValues);
-    setEjected(true);
+    setLoading(false);
     abortControllerRef.current?.abort();
   };
 
@@ -144,31 +174,51 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
   }) => {
     try {
       setLoading(true);
+
       const payload = {
         model: 'text-davinci-003',
         stream: true,
         temperature: 0,
-        max_tokens: 256,
+        max_tokens: 128,
         prompt,
       };
 
-      await getGPTResponseSSE({
-        payload,
-        signal: abortControllerRef.current?.signal,
-        onEnd: async () => {
-          setTriggerNext((t) => t + 1);
+      await fetchEventSource(OPENAPI_API_ENDPOINT, {
+        signal: abortControllerRef.current.signal,
+        headers: {
+          Authorization: `Bearer ${OPENAPI_API_KEY}`,
+          'Content-Type': 'application/json',
         },
-        onError: () => {
-          setResponse((prevResponse) => {
-            return { ...prevResponse, failed: true };
-          });
-          throw new Error();
+        method: 'POST',
+        body: JSON.stringify(payload),
+        async onopen(response) {
+          console.log(`response->`, response);
+          if (
+            response.ok &&
+            response.headers.get('content-type') === EventStreamContentType
+          ) {
+            return; // everything's good
+          } else if (
+            response.status >= 400 &&
+            response.status < 500 &&
+            response.status !== 429
+          ) {
+            // client-side errors are usually non-retriable:
+            // throw new FatalError();
+          } else {
+            // throw new RetriableError();
+          }
         },
-        onMessage: (msg: any) => {
+        onmessage(msg) {
+          if (msg.data === '[DONE]') {
+            setTriggerNext((t) => t + 1);
+            return;
+          }
           const { choices: resChoices } = JSON.parse(msg.data);
 
           if (resChoices.length) {
             const text = resChoices[0].text as string;
+            const finishReason = resChoices[0].finish_reason as string;
 
             setResponse((prevResponse) => {
               const newResponse = { ...prevResponse };
@@ -182,11 +232,74 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
                 newResponse.data = [...newResponse.data, text];
               }
 
+              newResponse.finishReason = finishReason;
               return newResponse;
             });
+
+            // if(finishReason==='length'){
+
+            // }
+          }
+
+          // if the server emits an error message, throw an exception
+          // so it gets handled by the onerror callback below:
+          if (msg.event === 'FatalError') {
+            // throw new FatalError(msg.data);
           }
         },
+        onclose() {
+          // if the server closes the connection unexpectedly, retry:
+          // throw new RetriableError();
+        },
+        onerror(err) {
+          // if (err instanceof FatalError) {
+          //   throw err; // rethrow to stop the operation
+          // } else {
+          //   // do nothing to automatically retry. You can also
+          //   // return a specific retry interval here.
+          // }
+        },
       });
+
+      // await getGPTResponseSSE({
+      //   payload,
+      //   signal: abortControllerRef.current?.signal,
+      //   onEnd: async () => {
+      //     setResponse((prevResponse) => {
+      //       const newResponse = { ...prevResponse };
+      //       newResponse.data.push(newStreamData);
+      //       return newResponse;
+      //     });
+      //     setTriggerNext((t) => t + 1);
+      //   },
+      //   onError: () => {
+      //     setResponse((prevResponse) => {
+      //       return { ...prevResponse, failed: true };
+      //     });
+      //   },
+      //   onMessage: (msg: any) => {
+      //     const { choices: resChoices } = JSON.parse(msg.data);
+
+      //     if (resChoices.length) {
+      //       const text = resChoices[0].text as string;
+
+      //       setResponse((prevResponse) => {
+      //         const newResponse = { ...prevResponse };
+      //         // return { ...prevResponse, failed: true };
+      //         if (!newResponse.data.length) {
+      //           const now = moment();
+      //           newResponse.createdAt = now.format('LLL');
+      //           newResponse.data = [[text]];
+      //         } else {
+      //           newResponse.text = newResponse.text + text;
+      //           newStreamData.push(text);
+      //         }
+
+      //         return newResponse;
+      //       });
+      //     }
+      //   },
+      // });
     } catch (e) {
       setLoading(false);
     }
@@ -194,9 +307,9 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
 
   const handlePlaygroundInputSubmit = async (values: any) => {
     try {
-      setEjected(false);
       setErrorMessage('');
       setResponse(initialValues);
+
       await playgroundResponseHandlers({
         query: values.text,
         prompt: [baseModel, values.text].join('\n'),
@@ -206,39 +319,87 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     }
   };
 
+  // const fetchPendingResponse = async () => {
+  //   let responseCompleted = false;
+  //   let completed = true;
+  //   try {
+  //     setErrorMessage('');
+  //     schemaFinder(response.text.trim());
+  //     responseCompleted = true;
+  //     setLoading(false);
+  //   } catch (e) {
+  //     // throw new Error('');
+  //     completed = false;
+  //   } finally {
+  //     setResponse((prevResponse) => {
+  //       prevResponse.pending = !responseCompleted;
+  //       prevResponse.completed = completed;
+  //       return prevResponse;
+  //     });
+
+  //     if (!responseCompleted) {
+  //       let prompts = [baseModel, response.query, response.text];
+
+  //       await playgroundResponseHandlers({
+  //         query: response.query,
+  //         prompt: prompts.join('\n'),
+  //       });
+  //     }
+  //   }
+  // };
+
   const fetchPendingResponse = async () => {
-    let responseCompleted = false;
-    let completed = true;
     try {
       setErrorMessage('');
-      schemaFinder(response.text.trim());
-      responseCompleted = true;
-      setLoading(false);
-    } catch (e) {
-      // throw new Error('');
-      completed = false;
-    } finally {
-      setResponse((prevResponse) => {
-        prevResponse.pending = !responseCompleted;
-        prevResponse.completed = completed;
-        return prevResponse;
-      });
 
-      if (!responseCompleted) {
+      if (response.finishReason == 'length') {
         let prompts = [baseModel, response.query, response.text];
+        setResponse((prevResponse) => {
+          prevResponse.pending = true;
+          return prevResponse;
+        });
 
         await playgroundResponseHandlers({
           query: response.query,
           prompt: prompts.join('\n'),
         });
+      } else {
+        setResponse((prevResponse) => {
+          prevResponse.pending = false;
+          prevResponse.completed = true;
+          return prevResponse;
+        });
+        setLoading(false);
       }
+    } catch (e) {
+    } finally {
     }
   };
 
   const handleExecuteResponse = async () => {
     try {
       setLoading(true);
-      const parsedSchema = schemaFinder(response.text.trim());
+      let parsedSchema: any = jsYml.load(response.text.trim());
+      console.log(`BEFORE->`, parsedSchema);
+
+      if (Array.isArray(parsedSchema)) {
+        parsedSchema = {
+          schema: {
+            name: schema.name,
+            title: schema.title,
+          },
+          fields: parsedSchema,
+        };
+      }
+      if (!parsedSchema.schema) {
+        parsedSchema.schema = {
+          name: schema.name,
+          title: schema.title,
+        };
+      }
+
+      console.log(`AFTER->`, parsedSchema);
+
       const parsedObj = SchemaWizardSchema.parse(parsedSchema);
 
       const fieldsByName: { [key: string]: any } = {};
