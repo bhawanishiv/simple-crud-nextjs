@@ -8,7 +8,7 @@ export interface IDynamicSchema {
   updatedAt: string;
 }
 
-export const FieldTypeEnum = z.enum([
+export const fieldTypes = [
   'number',
   'boolean',
   'text',
@@ -16,7 +16,9 @@ export const FieldTypeEnum = z.enum([
   'list',
   'date',
   'related',
-]);
+] as const;
+
+export const FieldTypeEnum = z.enum(fieldTypes);
 
 export type IDynamicSchemaFieldType =
   | 'number'
