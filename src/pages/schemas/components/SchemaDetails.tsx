@@ -20,7 +20,7 @@ import Chip from '@mui/material/Chip';
 
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
-import GPTChat from '@/containers/GPTChat';
+import SchemaChat from '@/containers/SchemaChat';
 
 import AddOrUpdateSchemaField from './AddOrUpdateSchemaField';
 
@@ -38,7 +38,7 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
   const { schema } = props;
 
   const { isLoading, isValidating, data, mutate } = useSwr(
-    `${schema.name}`,
+    schema ? `${schema.name}` : null,
     () => getSchemaFields(schema.name)
   );
 
@@ -157,7 +157,7 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
         />
         <div className="w-full py-2">
           <div className="flex items-center justify-between gap-2">
-            <GPTChat
+            <SchemaChat
               schema={schema}
               fields={data?.fields || []}
               onUpdate={handleUpdateByGPT}

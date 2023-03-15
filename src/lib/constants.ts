@@ -73,14 +73,11 @@ fields:
       title: "Role"
       type:  "list"
       options:  ["USER", "ADMIN"]
-      default: "USER"
-      unique:  true
+      default: "USER"      
     -
       name: "password"
       title: "Password"
       type:  "related"
       relatedSchema: "Password"
-      relationType: "hasMany"
-      unique:  true
-
+      relationType: "hasMany"    
 `;

@@ -31,6 +31,8 @@ import AddOrUpdateSchemaField from './components/AddOrUpdateSchemaField';
 import AddOrUpdateSchemaItem from './components/AddOrUpdateSchemaItem';
 import DeleteItemDialog from './components/DeleteItemDialog';
 
+import DataChat from 'src/containers/DataChat';
+
 const LIMIT = 100;
 
 const getSchemaItems = async (name: string, index: number) => {
@@ -190,6 +192,10 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
     setAddOrUpdateItem(false);
   };
 
+  const handleDataChatComplete = () => {
+    mutate().then(mutateRefItems);
+  };
+
   const getRefFieldsLabel = (item: any) => {
     return Object.keys(item).filter(
       (f) =>
@@ -274,6 +280,11 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
                   )}
                 </div>
               </div>
+              <DataChat
+                schema={schema}
+                fields={fields}
+                onComplete={handleDataChatComplete}
+              />
               <div className="flex items-center gap-2">
                 <div>
                   <Button onClick={handleAddItem}>
@@ -300,6 +311,11 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
                         <TableCell key={field.id}>
                           {field.title}
                           {field.type === 'related' ? ' (ref)' : ''}
+                          {field.required && (
+                            <Typography component="span" color="red">
+                              *
+                            </Typography>
+                          )}
                         </TableCell>
                       );
                     })}
