@@ -93,14 +93,14 @@ const initialValues = {
   finishReason: '',
 };
 
-type GPTChatProps = {
+type DataChatProps = {
   schema: IDynamicSchema;
   fields: IDynamicSchemaField[];
-  onUpdate: () => void;
+  onComplete: () => void;
 };
 
-const GPTChat: React.FC<GPTChatProps> = (props) => {
-  const { schema, fields, onUpdate } = props;
+const DataChat: React.FC<DataChatProps> = (props) => {
+  const { schema, fields, onComplete } = props;
   const abortControllerRef = useRef(new AbortController());
 
   const [loading, setLoading] = useState(false);
@@ -111,13 +111,16 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     completed?: boolean;
     pending?: boolean;
     query: string;
+    prompt?: string;
     finishReason?: string;
   }>(initialValues);
+
+  const [refSchemas, setRefSchemas] = useState<any[]>([]);
   const [triggerNext, setTriggerNext] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
   const baseModel = useMemo(() => {
-    const preText = getPromptPreText();
+    // const preText = getPromptPreText();
     if (fields.length > 3) {
       const localBaseModel = jsYml.dump(
         {
@@ -143,7 +146,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
       );
 
       return (
-        preText +
+        // preText +
         '\n\n' +
         'generate a schema to track ' +
         schema.name +
@@ -152,7 +155,9 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
       );
     }
 
-    return preText + '\n' + BASE_INPUT_MODEL_PROMPT_YAML;
+    return '';
+
+    // return preText + '\n' + BASE_INPUT_MODEL_PROMPT_YAML;
   }, [schema, fields]);
 
   const { formState, register, watch, handleSubmit } = useForm({});
@@ -165,13 +170,50 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     abortControllerRef.current?.abort();
   };
 
-  const playgroundResponseHandlers = async ({
-    query,
-    prompt,
+  const fetchSchemaDetails = async ({
+    fields,
   }: {
-    query: string;
-    prompt: string;
+    fields: IDynamicSchemaField[];
   }) => {
+    const promises = [];
+
+    for (let field of fields.filter((f) => f.type === 'related')) {
+      promises.push(
+        api.request(`/api/schemas/${field.relatedSchema}/fields`, 'GET', {})
+      );
+    }
+
+    const res = await Promise.all(promises);
+    const data = [];
+
+    for (let i = 0; i < res.length; i++) {
+      data.push(await res[i].json());
+    }
+
+    let parsed = data.map((d) => ({
+      schema: _.pick(d.schema, ['name', 'title']),
+      fields: d.fields.map((f: any) =>
+        _.pick(f, [
+          'title',
+          'name',
+          'type',
+          'required',
+          'unique',
+          'relatedSchema',
+          'relationType',
+          'options',
+          'default',
+        ])
+      ),
+    }));
+    console.log(`parsed->`, parsed);
+
+    setRefSchemas(parsed);
+
+    return parsed;
+  };
+
+  const playgroundResponseHandlers = async ({ prompt }: { prompt: string }) => {
     try {
       setLoading(true);
 
@@ -192,7 +234,6 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
         method: 'POST',
         body: JSON.stringify(payload),
         async onopen(response) {
-          console.log(`response->`, response);
           if (
             response.ok &&
             response.headers.get('content-type') === EventStreamContentType
@@ -260,107 +301,73 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
           // }
         },
       });
-
-      // await getGPTResponseSSE({
-      //   payload,
-      //   signal: abortControllerRef.current?.signal,
-      //   onEnd: async () => {
-      //     setResponse((prevResponse) => {
-      //       const newResponse = { ...prevResponse };
-      //       newResponse.data.push(newStreamData);
-      //       return newResponse;
-      //     });
-      //     setTriggerNext((t) => t + 1);
-      //   },
-      //   onError: () => {
-      //     setResponse((prevResponse) => {
-      //       return { ...prevResponse, failed: true };
-      //     });
-      //   },
-      //   onMessage: (msg: any) => {
-      //     const { choices: resChoices } = JSON.parse(msg.data);
-
-      //     if (resChoices.length) {
-      //       const text = resChoices[0].text as string;
-
-      //       setResponse((prevResponse) => {
-      //         const newResponse = { ...prevResponse };
-      //         // return { ...prevResponse, failed: true };
-      //         if (!newResponse.data.length) {
-      //           const now = moment();
-      //           newResponse.createdAt = now.format('LLL');
-      //           newResponse.data = [[text]];
-      //         } else {
-      //           newResponse.text = newResponse.text + text;
-      //           newStreamData.push(text);
-      //         }
-
-      //         return newResponse;
-      //       });
-      //     }
-      //   },
-      // });
     } catch (e) {
       setLoading(false);
     }
   };
 
-  const handlePlaygroundInputSubmit = async (values: any) => {
+  const preparePrompt = (query: string, refSchemas: any[] = []) => {
+    const schemas = [
+      ...refSchemas,
+      {
+        schema: _.pick(schema, ['name', 'title']),
+        fields: _.map(
+          fields,
+          _.partialRight(_.pick, [
+            'title',
+            'name',
+            'type',
+            'required',
+            'unique',
+            'relatedSchema',
+            'relationType',
+            'options',
+            'default',
+          ])
+        ),
+      },
+    ];
+
+    console.log(`schemas->`, refSchemas, schemas);
+    const ymlString = jsYml.dump(
+      { schemas },
+      {
+        quotingType: '"',
+        forceQuotes: true,
+      }
+    );
+
+    return ymlString + '\n' + query;
+  };
+
+  const handleInputSubmit = async (values: any) => {
     try {
       setErrorMessage('');
       setResponse(initialValues);
 
+      const refSchemas = await fetchSchemaDetails({ fields });
+      const prompt = preparePrompt(values.text, refSchemas);
+      setResponse((r) => ({ ...r, prompt }));
       await playgroundResponseHandlers({
-        query: values.text,
-        prompt: [baseModel, values.text].join('\n'),
+        prompt,
       });
     } catch (e) {
       //
     }
   };
 
-  // const fetchPendingResponse = async () => {
-  //   let responseCompleted = false;
-  //   let completed = true;
-  //   try {
-  //     setErrorMessage('');
-  //     schemaFinder(response.text.trim());
-  //     responseCompleted = true;
-  //     setLoading(false);
-  //   } catch (e) {
-  //     // throw new Error('');
-  //     completed = false;
-  //   } finally {
-  //     setResponse((prevResponse) => {
-  //       prevResponse.pending = !responseCompleted;
-  //       prevResponse.completed = completed;
-  //       return prevResponse;
-  //     });
-
-  //     if (!responseCompleted) {
-  //       let prompts = [baseModel, response.query, response.text];
-
-  //       await playgroundResponseHandlers({
-  //         query: response.query,
-  //         prompt: prompts.join('\n'),
-  //       });
-  //     }
-  //   }
-  // };
-
   const fetchPendingResponse = async () => {
     try {
       setErrorMessage('');
 
       if (response.finishReason == 'length') {
-        let prompts = [baseModel, response.query, response.text];
+        let prompts = [response.prompt, response.text];
         setResponse((prevResponse) => {
           prevResponse.pending = true;
           return prevResponse;
         });
 
         await playgroundResponseHandlers({
-          query: response.query,
           prompt: prompts.join('\n'),
         });
       } else {
@@ -376,60 +383,69 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     }
   };
 
+  const getFieldSchema = (field: IDynamicSchemaField) => {
+    switch (field.type) {
+      case 'text':
+      case 'multi-text':
+      case 'list': {
+        if (!field.required) {
+          return z.string().trim().optional();
+        }
+        return z.string().trim();
+      }
+      case 'related': {
+        let schema;
+        if (field.relationType === 'hasMany') {
+          schema = z.array(z.string().trim());
+        } else {
+          schema = z.string().trim().nullable();
+        }
+
+        if (!field.required) {
+          return schema.optional();
+        }
+      }
+      default:
+        return z.any();
+    }
+  };
+
+  const prepareSchema = (fields: IDynamicSchemaField[]) => {
+    const schemaObj: { [key: string]: any } = {};
+
+    for (let field of fields) {
+      schemaObj[field.name] = getFieldSchema(field);
+    }
+
+    return z.array(z.object(schemaObj));
+  };
+
   const handleExecuteResponse = async () => {
     try {
       setLoading(true);
       let parsedSchema: any = jsYml.load(response.text.trim());
       console.log(`BEFORE->`, parsedSchema);
 
-      if (Array.isArray(parsedSchema)) {
-        parsedSchema = {
-          schema: {
-            name: schema.name,
-            title: schema.title,
-          },
-          fields: parsedSchema,
-        };
-      }
-      if (!parsedSchema.schema) {
-        parsedSchema.schema = {
-          name: schema.name,
-          title: schema.title,
-        };
-      }
+      const ZodSchema = prepareSchema(fields);
 
-      console.log(`AFTER->`, parsedSchema);
+      const parsedItems = ZodSchema.parse(
+        parsedSchema.data ? parsedSchema.data : parsedSchema
+      );
 
-      const parsedObj = SchemaWizardSchema.parse(parsedSchema);
+      console.log(`AFTER->`, parsedItems);
 
-      const fieldsByName: { [key: string]: any } = {};
-      for (let field of fields) {
-        fieldsByName[field.name] = 1;
-      }
-
-      const payload: z.infer<typeof SchemaWizardSchema> = {
-        schema: parsedObj.schema,
-        fields: [],
-      };
-
-      const newFields = [];
-      for (let field of parsedObj.fields) {
-        if (fieldsByName[field.name]) {
-          continue;
-        }
-        newFields.push(field);
-      }
-
-      payload.fields = newFields;
-
-      const res = await api.request('/api/schemas/playground', 'POST', payload);
+      const res = await api.request(
+        `/api/schemas/${schema.id}/items`,
+        'POST',
+        parsedItems
+      );
 
       const data = await res.json();
 
       if (!res.ok) throw new Error(data?.message);
 
       if (!data) throw new Error();
-      onUpdate();
+      onComplete();
     } catch (e: any) {
       if (e instanceof ZodError) {
         setErrorMessage(e.errors[0].message);
@@ -467,7 +483,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     );
   };
 
-  const renderGPTChat = () => {
+  const renderDataChat = () => {
     return (
       <div
         className={cx(
@@ -475,10 +491,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
           response.text && 'bg-background-light rounded-t-xl'
         )}
       >
-        <form
-          className="w-full"
-          onSubmit={handleSubmit(handlePlaygroundInputSubmit)}
-        >
+        <form className="w-full" onSubmit={handleSubmit(handleInputSubmit)}>
           <div
             className={cx(
               'flex items-center w-full overflow-hidden rounded-full',
@@ -486,11 +499,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
             )}
           >
             <input
-              placeholder={
-                fields.length
-                  ? `e.g. Add name, age, dateOfBirth etc. fields to ${schema.name} schema.`
-                  : `e.g. Create a schema to manage ${schema.name}`
-              }
+              placeholder={`Add some dummy data to ${schema.title} schema`}
               className="py-3 px-4 w-full bg-transparent outline-none"
               {...register('text', { required: 'true' })}
             />
@@ -544,7 +553,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     setResponse(initialValues);
   }, [schema, fields]);
 
-  return renderGPTChat();
+  return renderDataChat();
 };
 
-export default GPTChat;
+export default DataChat;
