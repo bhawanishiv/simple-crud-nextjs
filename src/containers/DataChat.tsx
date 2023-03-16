@@ -428,9 +428,17 @@ const DataChat: React.FC<DataChatProps> = (props) => {
 
       const ZodSchema = prepareSchema(fields);
 
-      const parsedItems = ZodSchema.parse(
-        parsedSchema.data ? parsedSchema.data : parsedSchema
-      );
+      let data: any = [];
+
+      if (parsedSchema.dummyData) {
+        data = parsedSchema.dummyData;
+      } else if (parsedSchema.data) {
+        data = parsedSchema.data;
+      } else {
+        data = parsedSchema;
+      }
+
+      const parsedItems = ZodSchema.parse(data);
 
       console.log(`AFTER->`, parsedItems);
 
@@ -440,11 +448,11 @@ const DataChat: React.FC<DataChatProps> = (props) => {
         parsedItems
       );
 
-      const data = await res.json();
+      const resData = await res.json();
 
-      if (!res.ok) throw new Error(data?.message);
+      if (!res.ok) throw new Error(resData?.message);
 
-      if (!data) throw new Error();
+      if (!resData) throw new Error();
       onComplete();
     } catch (e: any) {
       if (e instanceof ZodError) {
