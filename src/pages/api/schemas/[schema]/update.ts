@@ -15,35 +15,31 @@ type Data = {
   message: string;
 };
 
-const getFieldSchema = (field: IDynamicSchemaField) => {
+const getUpdatableFieldSchema = (field: IDynamicSchemaField) => {
   switch (field.type) {
     case 'text':
     case 'multi-text':
     case 'list': {
-      if (!field.required) {
-        return z.string().trim().optional();
-      }
-      return z.string().trim();
+      return z.string().trim().optional();
     }
     case 'related': {
       let schema;
       if (field.relationType === 'hasMany') {
-        schema = z.array(
-          z
-            .string()
-            .trim()
-            .transform((v) => new mongoose.Types.ObjectId(v))
-        );
+        return z
+          .array(
+            z
+              .string()
+              .trim()
+              .transform((v) => new mongoose.Types.ObjectId(v))
+          )
+          .optional();
       } else {
-        schema = z
+        return z
           .string()
           .trim()
           .nullable()
-          .transform((v) => (v ? new mongoose.Types.ObjectId(v) : v));
-      }
-
-      if (!field.required) {
-        return schema.optional();
+          .transform((v) => (v ? new mongoose.Types.ObjectId(v) : v))
+          .optional();
       }
     }
     default:
@@ -51,17 +47,27 @@ const getFieldSchema = (field: IDynamicSchemaField) => {
   }
 };
 
-const prepareSchema = (fields: IDynamicSchemaField[]) => {
+const prepareUpdatableSchema = (fields: IDynamicSchemaField[]) => {
   const schemaObj: { [key: string]: any } = {};
 
   for (let field of fields) {
-    schemaObj[field.name] = getFieldSchema(field);
+    schemaObj[field.name] = getUpdatableFieldSchema(field);
   }
 
   return z.array(z.object(schemaObj));
 };
 
-const addItems = async (req: NextApiRequest, res: NextApiResponse) => {
+const RequestSchema = z.object({
+  body: z.object({
+    filter: z.any(),
+    update: z.any(),
+    updateType: z.enum(['single', 'many']),
+  }),
+});
+
+const parseRequest = () => {};
+
+const updateItems = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     await mongoClient;
 
@@ -97,7 +103,7 @@ const addItems = async (req: NextApiRequest, res: NextApiResponse) => {
 
     if (!fields) throw new Error("Couldn't find schema fields");
 
-    const Schema = prepareSchema(fields);
+    const Schema = prepareUpdatableSchema(fields);
 
     const values = Schema.parse(req.body);
 
@@ -164,7 +170,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
 
     if (!fields) throw new Error("Couldn't find schema fields");
 
-    const Schema = prepareSchema(fields);
+    const Schema = prepareUpdatableSchema(fields);
 
     const values = Schema.parse(req.body);
 
@@ -207,7 +213,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
  * /api/schemas/{id}items:
  *   post:
  *     tags: [Dynamic schema item]
- *     description: Add items based on defined schema fields
+ *     description: Search items based on query and filters on dynamic schema items
  *     parameters:
  *       - in : path
  *         name: id
@@ -218,7 +224,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
  *
  *     responses:
  *        200:
- *          description: Returns the created items ids
+ *          description: Returns the items that matches search result
  *          content:
  *              application/json:
  *                 schema:
@@ -236,7 +242,7 @@ export default async function handler(
 ) {
   switch (req.method) {
     case 'POST': {
-      return await addItems(req, res);
+      return await updateItems(req, res);
     }
   }
 

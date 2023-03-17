@@ -42,6 +42,7 @@ const SchemaFieldsSchema = z.object({
   skip: z.number().nonnegative(),
   sort: z.record(z.string().trim(), z.number()).optional(),
   query: z.string().trim().optional(),
+  filter: z.any(),
   ids: z
     .array(z.string().transform((v) => new mongoose.Types.ObjectId(v)))
     .optional(),
@@ -108,7 +109,7 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
             $options: 'i',
           },
         }
-      : {};
+      : { ...params.filter };
 
     let filterByIds = {};
     if (ids && ids.length) {

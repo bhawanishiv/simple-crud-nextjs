@@ -35,12 +35,16 @@ import DataChat from 'src/containers/DataChat';
 
 const LIMIT = 100;
 
-const getSchemaItems = async (name: string, index: number) => {
-  const res = await api.request(`/api/schemas/${name}/details`, 'POST', {
+const getSchemaItems = async ([url, schema, page, params]: any[]) => {
+  console.log(`params->`, params);
+  const res = await api.request(`${url}/${schema}/details`, 'POST', {
+    skip: LIMIT * page,
     limit: LIMIT,
-    skip: LIMIT * index,
+    ...params,
   });
   const data = await res.json();
+
+  console.log(`data->`, data);
   return data;
 };
 
@@ -114,15 +118,22 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
 
   const router = useRouter();
 
+  const [pageIndex, setPageIndex] = useState(0);
+  const [queryParams, setQueryParams] = useState<any>({});
   // const { isLoading, data: definitions } = useSwr(
   //   `/api/schemas/${router.query.schema}/definitions`,
   //   getSchemaAndFields
   // );
-
-  const { data, error, mutate, size, setSize, isValidating } = useSWRInfinite(
-    (index) => (router.query.schema ? `${index}` : null),
-    (index) => getSchemaItems(router.query.schema as string, +index)
+  const { data, error, isValidating, mutate } = useSwr(
+    ['/api/schemas', router.query.schema, pageIndex, queryParams],
+    getSchemaItems
   );
+
+  console.log(`data->`, data);
+  // const { data, error, mutate, size, setSize, isValidating } = useSWRInfinite(
+  //   (index) => (router.query.schema ? `${index}` : null),
+  //   (index) => getSchemaItems(router.query.schema as string, +index)
+  // );
 
   const isLoadingInitialData = !data && !error;
 
@@ -149,6 +160,28 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
   // const isReachingEnd =
   //   isEmpty || (data && data[data.length - 1]?.length < PAGE_SIZE);
   // const isRefreshing = isValidating && data && data.length === size;
+
+  const handleSearch = async (params: any) => {
+    const payload = {
+      ...params,
+      limit: params.limit || LIMIT,
+      skip: params.skip || 0,
+    };
+    setPageIndex(0);
+    setQueryParams(payload);
+
+    // console.log(`params->`, params);
+    // console.log(`payload->`, payload);
+    // const res = await api.request(
+    //   `/api/schemas/${router.query.schema}/details`,
+    //   'POST',
+    //   payload
+    // );
+    // const data = await res.json();
+    // console.log(`data->`, data);
+    mutate();
+  };
+
   const handleAddFieldClick = () => {
     setCurrentField(true);
   };
@@ -241,7 +274,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
         </div>
       );
     }
-
+    console.log(`data->`, data);
     if (!data) {
       return (
         <div className="flex flex-col items-center justify-center h-screen w-screen">
@@ -252,7 +285,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
       );
     }
 
-    const [{ schema, fields, items, count }] = data;
+    const { schema, fields, items, count } = data;
     return (
       <div>
         <AddOrUpdateSchemaItem
@@ -270,10 +303,8 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div>
-                  <Chip label={schema.name} />
-                  <Typography>{schema.title}</Typography>
-                </div>
+                <Typography>{schema.title}</Typography>
+                <Chip label={schema.name} />
                 <div>
                   {(isValidating || isRefItemValidating) && (
                     <CircularProgress size={16} />
@@ -283,16 +314,22 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
               <DataChat
                 schema={schema}
                 fields={fields}
+                onSearch={handleSearch}
                 onComplete={handleDataChatComplete}
               />
               <div className="flex items-center gap-2">
                 <div>
-                  <Button onClick={handleAddItem}>
+                  <Button className="whitespace-nowrap" onClick={handleAddItem}>
                     Add a {_.lowerCase(schema.title)}
                   </Button>
                 </div>
                 <div>
-                  <Button onClick={handleAddFieldClick}>Add a field</Button>
+                  <Button
+                    className="whitespace-nowrap"
+                    onClick={handleAddFieldClick}
+                  >
+                    Add a field
+                  </Button>
                 </div>
               </div>
             </div>

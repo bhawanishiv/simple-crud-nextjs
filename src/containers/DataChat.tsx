@@ -22,6 +22,7 @@ import {
   BASE_INPUT_MODEL_PROMPT_JSON,
   BASE_INPUT_MODEL_PROMPT_YAML,
   OPENAPI_API_KEY,
+  OPERATION_GPT_TEXT_YAML,
 } from '@/lib/constants';
 import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
 import { fieldTypes } from '@/interfaces/DynamicSchema';
@@ -35,22 +36,31 @@ import {
   RelatedTypeEnum,
 } from '@/interfaces/DynamicSchema';
 import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
+import {
+  CreateOperationRequest,
+  OperationRequest,
+  SearchOperationRequest,
+  UpdateOperationRequest,
+} from '@/interfaces/operation';
+
+const schemaFields = ['name', 'title'];
+const fieldFields = [
+  'name',
+  'title',
+  'type',
+  'required',
+  'unique',
+  'default',
+  'options',
+  'relatedSchema',
+  'relationType',
+];
 
 const getPromptPreText = () => {
   return jsYml.dump({
     fieldTypes,
     relationTypes: ['hasOne', 'hasMany'],
-    fields: [
-      'name',
-      'title',
-      'type',
-      'required',
-      'unique',
-      'default',
-      'options',
-      'relatedSchema',
-      'relationType',
-    ],
+    fields: fieldFields,
   });
 };
 
@@ -97,10 +107,11 @@ type DataChatProps = {
   schema: IDynamicSchema;
   fields: IDynamicSchemaField[];
   onComplete: () => void;
+  onSearch: (params: any) => void;
 };
 
 const DataChat: React.FC<DataChatProps> = (props) => {
-  const { schema, fields, onComplete } = props;
+  const { schema, fields, onSearch, onComplete } = props;
   const abortControllerRef = useRef(new AbortController());
 
   const [loading, setLoading] = useState(false);
@@ -124,23 +135,8 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     if (fields.length > 3) {
       const localBaseModel = jsYml.dump(
         {
-          schema: {
-            name: schema.name,
-            title: schema.title,
-          },
-          fields: fields.map((field) =>
-            _.pick(field, [
-              'title',
-              'name',
-              'type',
-              'required',
-              'unique',
-              'relatedSchema',
-              'relationType',
-              'options',
-              'default',
-            ])
-          ),
+          schema: _.pick(schema, schemaFields),
+          fields: fields.map((field) => _.pick(field, fieldFields)),
         },
         {}
       );
@@ -191,20 +187,8 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     }
 
     let parsed = data.map((d) => ({
-      schema: _.pick(d.schema, ['name', 'title']),
-      fields: d.fields.map((f: any) =>
-        _.pick(f, [
-          'title',
-          'name',
-          'type',
-          'required',
-          'unique',
-          'relatedSchema',
-          'relationType',
-          'options',
-          'default',
-        ])
-      ),
+      schema: _.pick(d.schema, schemaFields),
+      fields: d.fields.map((f: any) => _.pick(f, fieldFields)),
     }));
     console.log(`parsed->`, parsed);
 
@@ -310,25 +294,11 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     const schemas = [
       ...refSchemas,
       {
-        schema: _.pick(schema, ['name', 'title']),
-        fields: _.map(
-          fields,
-          _.partialRight(_.pick, [
-            'title',
-            'name',
-            'type',
-            'required',
-            'unique',
-            'relatedSchema',
-            'relationType',
-            'options',
-            'default',
-          ])
-        ),
+        schema: _.pick(schema, schemaFields),
+        fields: fields.map((f: any) => _.pick(f, fieldFields)),
       },
     ];
 
-    console.log(`schemas->`, refSchemas, schemas);
     const ymlString = jsYml.dump(
       { schemas },
       {
@@ -340,46 +310,43 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     return ymlString + '\n' + query;
   };
 
+  const getOperationPrompt = (query: string) => {
+    const schemaYamlStr = jsYml.dump(
+      {
+        schema: _.pick(schema, schemaFields),
+        fields: fields.map((f: any) => _.pick(f, fieldFields)),
+      },
+      {
+        quotingType: '"',
+        forceQuotes: true,
+      }
+    );
+    const prompt =
+      'Detect the type of operation being requested\n\n' +
+      schemaYamlStr +
+      '\n' +
+      OPERATION_GPT_TEXT_YAML +
+      '\n' +
+      query;
+
+    return prompt;
+  };
+
   const handleInputSubmit = async (values: any) => {
     try {
       setErrorMessage('');
       setResponse(initialValues);
 
-      const refSchemas = await fetchSchemaDetails({ fields });
-      const prompt = preparePrompt(values.text, refSchemas);
+      const prompt = getOperationPrompt(values.text);
+      console.log(prompt);
+      // const refSchemas = await fetchSchemaDetails({ fields });
+      // const prompt = preparePrompt(values.text, refSchemas);
       setResponse((r) => ({ ...r, prompt }));
       await playgroundResponseHandlers({
         prompt,
       });
     } catch (e) {
       //
-    }
-  };
-
-  const fetchPendingResponse = async () => {
-    try {
-      setErrorMessage('');
-
-      if (response.finishReason == 'length') {
-        let prompts = [response.prompt, response.text];
-        setResponse((prevResponse) => {
-          prevResponse.pending = true;
-          return prevResponse;
-        });
-
-        await playgroundResponseHandlers({
-          prompt: prompts.join('\n'),
-        });
-      } else {
-        setResponse((prevResponse) => {
-          prevResponse.pending = false;
-          prevResponse.completed = true;
-          return prevResponse;
-        });
-        setLoading(false);
-      }
-    } catch (e) {
-    } finally {
     }
   };
 
@@ -420,7 +387,9 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     return z.array(z.object(schemaObj));
   };
 
-  const handleExecuteResponse = async () => {
+  const handleExecuteCreateResponse = async (
+    params: CreateOperationRequest
+  ) => {
     try {
       setLoading(true);
       let parsedSchema: any = jsYml.load(response.text.trim());
@@ -460,6 +429,88 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       } else setErrorMessage(e.message || 'Something is wrong');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExecuteSearchResponse = (req: SearchOperationRequest) => {
+    onSearch(req.params);
+  };
+
+  const handleExecuteUpdateResponse = (req: UpdateOperationRequest) => {
+    const payload = {
+      ...req.params,
+    };
+  };
+
+  const handleExecuteResponse = async () => {
+    try {
+      setLoading(true);
+      let parsedSchema: any = jsYml.load(response.text.trim());
+      console.log(`BEFORE->`, parsedSchema);
+
+      if (!parsedSchema.response) {
+        throw new Error('No valid response found');
+      }
+
+      const { type } = parsedSchema.response as OperationRequest;
+
+      switch (type as string) {
+        case 'READ':
+        case 'FIND':
+        case 'SEARCH': {
+          await handleExecuteSearchResponse(parsedSchema.response);
+          break;
+        }
+
+        case 'CREATE':
+        case 'ADD': {
+          await handleExecuteCreateResponse(parsedSchema.response);
+          break;
+        }
+
+        case 'UPDATE':
+        case 'CHANGE':
+        case 'MODIFY': {
+          await handleExecuteUpdateResponse(parsedSchema.response);
+          break;
+        }
+
+        default: {
+          throw new Error('Invalid operation type');
+          break;
+        }
+      }
+    } catch (e: any) {
+      setErrorMessage(e.message || 'Something is wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPendingResponse = async () => {
+    try {
+      setErrorMessage('');
+
+      if (response.finishReason == 'length') {
+        let prompts = [response.prompt, response.text];
+        setResponse((prevResponse) => {
+          prevResponse.pending = true;
+          return prevResponse;
+        });
+
+        await playgroundResponseHandlers({
+          prompt: prompts.join('\n'),
+        });
+      } else {
+        setResponse((prevResponse) => {
+          prevResponse.pending = false;
+          prevResponse.completed = true;
+          return prevResponse;
+        });
+        await handleExecuteResponse();
+      }
+    } catch (e) {
+    } finally {
     }
   };
 
@@ -507,7 +558,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
             )}
           >
             <input
-              placeholder={`Add some dummy data to ${schema.title} schema`}
+              placeholder={`Search, add or update in ${schema.title} schema`}
               className="py-3 px-4 w-full bg-transparent outline-none"
               {...register('text', { required: 'true' })}
             />
