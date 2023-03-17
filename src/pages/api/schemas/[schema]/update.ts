@@ -15,7 +15,7 @@ type Data = {
   message: string;
 };
 
-const getUpdatableFieldSchema = (field: IDynamicSchemaField) => {
+const getSchema = (field: IDynamicSchemaField) => {
   switch (field.type) {
     case 'text':
     case 'multi-text':
@@ -23,7 +23,6 @@ const getUpdatableFieldSchema = (field: IDynamicSchemaField) => {
       return z.string().trim().optional();
     }
     case 'related': {
-      let schema;
       if (field.relationType === 'hasMany') {
         return z
           .array(
@@ -47,14 +46,14 @@ const getUpdatableFieldSchema = (field: IDynamicSchemaField) => {
   }
 };
 
-const prepareUpdatableSchema = (fields: IDynamicSchemaField[]) => {
+const prepareSchema = (fields: IDynamicSchemaField[]) => {
   const schemaObj: { [key: string]: any } = {};
 
   for (let field of fields) {
-    schemaObj[field.name] = getUpdatableFieldSchema(field);
+    schemaObj[field.name] = getSchema(field);
   }
 
-  return z.array(z.object(schemaObj));
+  return z.object(schemaObj);
 };
 
 const RequestSchema = z.object({
@@ -65,80 +64,13 @@ const RequestSchema = z.object({
   }),
 });
 
-const parseRequest = () => {};
-
-const updateItems = async (req: NextApiRequest, res: NextApiResponse) => {
-  try {
-    await mongoClient;
-
-    const schemaId = z.string().trim().parse(req.query['schema']);
-
-    const schema = await DynamicSchema.findById(schemaId);
-
-    if (!schema) {
-      return res.status(404).json({ message: "Couldn't the find schema" });
-    }
-
-    const id = schema._id.toString();
-
-    const fields = await DynamicSchemaField.find(
-      { schema: id },
-      {
-        id: '$_id',
-        _id: 0,
-        title: 1,
-        name: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        schema: 1,
-        type: 1,
-        required: 1,
-        unique: 1,
-        default: 1,
-        relationType: 1,
-        relatedSchema: 1,
-        options: 1,
-      }
-    ).exec();
-
-    if (!fields) throw new Error("Couldn't find schema fields");
-
-    const Schema = prepareUpdatableSchema(fields);
-
-    const values = Schema.parse(req.body);
-
-    const Model = getDynamicSchema(
-      schema.name,
-      fields as IDynamicSchemaField[]
-    );
-
-    const results = await Model.bulkWrite(
-      values.map((item) => ({
-        insertOne: {
-          document: item,
-        },
-      }))
-    );
-
-    const response = {
-      ...results.insertedIds,
-    };
-
-    return res.json(response);
-  } catch (e) {
-    if (e instanceof ZodError) {
-      return res.status(400).json(e.errors[0]);
-    }
-    return res.status(400).json({ message: (e as Error).message });
-  }
-};
-
 const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     await mongoClient;
 
     const schemaId = z.string().trim().parse(req.query['schema']);
-    const itemId = z.string().trim().parse(req.body.id);
+
+    const input = RequestSchema.parse(req);
 
     const schema = await DynamicSchema.findById(schemaId);
 
@@ -170,35 +102,26 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
 
     if (!fields) throw new Error("Couldn't find schema fields");
 
-    const Schema = prepareUpdatableSchema(fields);
-
-    const values = Schema.parse(req.body);
+    const Schema = prepareSchema(fields);
 
     const Model = getDynamicSchema(
       schema.name,
       fields as IDynamicSchemaField[]
     );
 
-    const item = await Model.findByIdAndUpdate(
-      itemId,
-      { ...values },
-      {
-        returnDocument: 'after',
-      }
-    ).exec();
+    const {
+      body: { filter, updateType, update },
+    } = input;
 
-    if (!item) {
-      throw new Error("Couldn't find the item");
+    const values = Schema.parse(update);
+
+    if (updateType === 'many') {
+      const manyItemsUpdate = await Model.updateMany(filter, values).exec();
+      return res.json(manyItemsUpdate);
+    } else {
+      const singleUpdate = await Model.updateOne(filter, values).exec();
+      return res.json(singleUpdate);
     }
-
-    await item.save();
-
-    const response = {
-      id: (item._id as any).toString(),
-      ...item.toObject(),
-    };
-
-    return res.json(response);
   } catch (e) {
     if (e instanceof ZodError) {
       return res.status(400).json(e.errors[0]);
@@ -210,10 +133,10 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
 /**
  *
  * @swagger
- * /api/schemas/{id}items:
+ * /api/schemas/{id}/update:
  *   post:
  *     tags: [Dynamic schema item]
- *     description: Search items based on query and filters on dynamic schema items
+ *     description: Update single or multiple items based on query and filters on dynamic schema items
  *     parameters:
  *       - in : path
  *         name: id
@@ -224,7 +147,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
  *
  *     responses:
  *        200:
- *          description: Returns the items that matches search result
+ *          description: Returns the result of update operation
  *          content:
  *              application/json:
  *                 schema:
@@ -242,7 +165,7 @@ export default async function handler(
 ) {
   switch (req.method) {
     case 'POST': {
-      return await updateItems(req, res);
+      return await updateItem(req, res);
     }
   }
 

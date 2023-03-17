@@ -36,7 +36,6 @@ import DataChat from 'src/containers/DataChat';
 const LIMIT = 100;
 
 const getSchemaItems = async ([url, schema, page, params]: any[]) => {
-  console.log(`params->`, params);
   const res = await api.request(`${url}/${schema}/details`, 'POST', {
     skip: LIMIT * page,
     limit: LIMIT,
@@ -44,7 +43,6 @@ const getSchemaItems = async ([url, schema, page, params]: any[]) => {
   });
   const data = await res.json();
 
-  console.log(`data->`, data);
   return data;
 };
 
@@ -129,7 +127,6 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
     getSchemaItems
   );
 
-  console.log(`data->`, data);
   // const { data, error, mutate, size, setSize, isValidating } = useSWRInfinite(
   //   (index) => (router.query.schema ? `${index}` : null),
   //   (index) => getSchemaItems(router.query.schema as string, +index)
@@ -274,7 +271,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
         </div>
       );
     }
-    console.log(`data->`, data);
+
     if (!data) {
       return (
         <div className="flex flex-col items-center justify-center h-screen w-screen">
@@ -316,6 +313,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
                 fields={fields}
                 onSearch={handleSearch}
                 onComplete={handleDataChatComplete}
+                onUpdateSuccess={handleAddOrUpdateSuccess}
               />
               <div className="flex items-center gap-2">
                 <div>

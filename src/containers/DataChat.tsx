@@ -56,6 +56,17 @@ const fieldFields = [
   'relationType',
 ];
 
+const updateOperation = async (schema: IDynamicSchema, payload: any) => {
+  const res = await api.request(
+    `/api/schemas/${schema.id}/update`,
+    'POST',
+    payload
+  );
+
+  const data = await res.json();
+  return data;
+};
+
 const getPromptPreText = () => {
   return jsYml.dump({
     fieldTypes,
@@ -108,10 +119,11 @@ type DataChatProps = {
   fields: IDynamicSchemaField[];
   onComplete: () => void;
   onSearch: (params: any) => void;
+  onUpdateSuccess: () => void;
 };
 
 const DataChat: React.FC<DataChatProps> = (props) => {
-  const { schema, fields, onSearch, onComplete } = props;
+  const { schema, fields, onSearch, onComplete, onUpdateSuccess } = props;
   const abortControllerRef = useRef(new AbortController());
 
   const [loading, setLoading] = useState(false);
@@ -409,8 +421,6 @@ const DataChat: React.FC<DataChatProps> = (props) => {
 
       const parsedItems = ZodSchema.parse(data);
 
-      console.log(`AFTER->`, parsedItems);
-
       const res = await api.request(
         `/api/schemas/${schema.id}/items`,
         'POST',
@@ -422,6 +432,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       if (!res.ok) throw new Error(resData?.message);
 
       if (!resData) throw new Error();
+
       onComplete();
     } catch (e: any) {
       if (e instanceof ZodError) {
@@ -436,10 +447,15 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     onSearch(req.params);
   };
 
-  const handleExecuteUpdateResponse = (req: UpdateOperationRequest) => {
+  const handleExecuteUpdateResponse = async (req: UpdateOperationRequest) => {
     const payload = {
       ...req.params,
+      ...req,
     };
+
+    await updateOperation(schema, payload);
+    //  await updateOperation(schema,payload);
+    onUpdateSuccess();
   };
 
   const handleExecuteResponse = async () => {
