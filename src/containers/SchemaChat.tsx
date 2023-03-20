@@ -192,7 +192,6 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
         method: 'POST',
         body: JSON.stringify(payload),
         async onopen(response) {
-          console.log(`response->`, response);
           if (
             response.ok &&
             response.headers.get('content-type') === EventStreamContentType
