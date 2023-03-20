@@ -107,11 +107,14 @@ response:
             firstName: 1 
 
 Add some dummy data to users schema
+request:
+    query: "Add some dummy data to users schema"
 response:
     type: "CREATE"
-    params:
-        query: "Add some dummy data to users schema"
 
+Add some dummy data to the schema
+response:
+    type: "CREATE"
 
 Update those users' role to "MANAGER" whose roles are either "USER or "ADMIN"
 response:
