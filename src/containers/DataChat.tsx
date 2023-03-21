@@ -322,10 +322,11 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     });
 
     return (
-      'Generate a response of items in yaml format which can be added to mongoose database based on provided schema and fields\n' +
+      '### Process different mongoose schemas and their fields, and response based on these input.\n' +
       ymlString +
       '\n' +
-      query
+      'Note: response should be in yaml format.\n' +
+      `statement: ${query}`
     );
   };
 
@@ -413,8 +414,9 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       const ZodSchema = prepareSchema(fields);
 
       let data: any = [];
-
-      if (parsedSchema.dummyData) {
+      if (parsedSchema.response) {
+        data = parsedSchema.response;
+      } else if (parsedSchema.dummyData) {
         data = parsedSchema.dummyData;
       } else if (parsedSchema.data) {
         data = parsedSchema.data;
