@@ -155,3 +155,128 @@ response:
     updateType: "single"
     
 `;
+
+export const MIND_MAP_PROMPT_HELPER = `
+create a mind map for organization structure
+
+---
+    
+meta:
+  name: 'Organization Hierarchy'
+  author: 'bhawanishiv@gmail.com'
+  version: '0.2'
+  
+format: 'node_tree'
+data: 
+  id: 'root'
+  topic: 'Organization'
+  children: 
+      -
+          id: '0-0'
+          topic: 'Mission'     
+      -
+          id: '0-1'
+          topic: 'Vision'     
+      
+      -
+          id: '0-2'
+          topic: 'Values'     
+    
+      -
+          id: '0-3'
+          topic: 'Structure'     
+          children:
+              -
+                  id: '0-3-0'
+                  topic: 'Teams'
+      
+      -   
+          id: '0-4'
+          topic: 'Leadership'
+          children:
+              -
+                  id: '0-4-0'
+                  topic: 'Board of Directors'
+              
+              -
+                  id: '0-4-1'
+                  topic: 'Executive Team'
+      
+      -
+          id: '0-5'
+          topic: 'Processes'
+          children:
+              -
+                  id: '0-4-0'
+                  topic: 'Onboarding'
+              
+              -
+                  id: '0-4-1'
+                  topic: 'Performance Management'
+              -   
+                  id: '0-4-2'
+                  topic: 'Decision-making'
+      -   
+          id: '0-6'
+          topic: 'Culture'
+          children:
+              -
+                  id: '0-6-0'
+                  topic: 'Communication'
+              
+              -
+                  id: '0-6-1'
+                  topic: 'Collaboration'
+              -   
+                  id: '0-6-2'
+                  topic: 'Innovation'
+      
+      -   
+          id: '0-7'
+          topic: 'Environment'
+          children:
+              -
+                  id: '0-7-0'
+                  topic: 'Physical'
+              
+              -
+                  id: '0-7-1'
+                  topic: 'Digital'
+              
+        
+`;
+// export const MIND_MAP_PROMPT_HELPER = `
+// create a mind map for vacation planning to london
+
+// ---
+// -
+//     id: '0'
+//     topic: 'London Vacation Planning'
+//     style: null
+//     parent: null
+//     children:
+//     -
+//         id: '0-0'
+//         topic: 'Transportation'
+//         parent: '0'
+//     -
+//         id: '0-1'
+//         topic: 'Accommodation'
+//         parent: '0'
+//     -
+//         id: '0-2'
+//         topic: 'Sightseeing'
+//         parent: '0'
+//     -
+//         id: '0-3'
+//         topic: 'Food and Drink'
+//         parent: '0'
+//     -
+//         id: '0-4'
+//         topic: 'Entertainment'
+//         parent: '0'
+//     -
+//         id: '0-5'
+//         topic: 'Shopping'
+//         parent: '0'
+// `;
