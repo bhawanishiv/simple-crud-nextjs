@@ -14,6 +14,11 @@ export default class MyDocument extends Document {
           <link rel="shortcut icon" href="/favicon.ico" />
           <meta name="emotion-insertion-point" content="" />
           {(this.props as any).emotionStyleTags}
+          <link
+            type="text/css"
+            rel="stylesheet"
+            href="https://unpkg.com/jsmind@0.5/style/jsmind.css"
+          />
         </Head>
         <body>
           <Main />
