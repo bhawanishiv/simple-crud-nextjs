@@ -20,48 +20,6 @@ import MindMap from '@/components/MindMap';
 import { OPENAPI_API_KEY, MIND_MAP_PROMPT_HELPER } from '@/lib/constants';
 import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
 
-import data from '@/services/mindmap/data';
-
-const tempData = [
-  {
-    Java: [
-      {
-        Syntax: [
-          {
-            Variables: ['Data types', 'Scope', 'Naming conventions'],
-          },
-          {
-            Operators: ['Arithmetic', 'Assignment', 'Comparison'],
-          },
-          {
-            'Control Flow': ['Conditional statements', 'Loops'],
-          },
-        ],
-      },
-      {
-        Classes: [
-          'Constructors',
-          'Methods',
-          'Inheritance',
-          'Encapsulation',
-          'Abstract classes',
-          'Interfaces',
-        ],
-      },
-      {
-        Collections: ['Lists', 'Maps', 'Sets'],
-      },
-      'Exceptions',
-      'Multithreading',
-      'I/O - Streams - Files',
-      {
-        'Java 8': ['Lambda expressions', 'Stream API', 'Date/Time API'],
-      },
-      'JDBC',
-    ],
-  },
-];
-
 type ResponseItem =
   | string
   | {
@@ -340,7 +298,7 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
     return (
       <>
         {response.completed && response.rootState ? (
-          <MindMap mind={response.rootState} />
+          <MindMap model={response.rootState} />
         ) : (
           <form
             className="w-screen h-screen flex flex-col items-center justify-center"

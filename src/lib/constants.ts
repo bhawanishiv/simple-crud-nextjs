@@ -160,90 +160,119 @@ export const MIND_MAP_PROMPT_HELPER = `
 create a mind map for organization structure
 
 ---
-    
-meta:
-  name: 'Organization Hierarchy'
-  author: 'bhawanishiv@gmail.com'
-  version: '0.2'
-  
-format: 'node_tree'
-data: 
-  id: 'root'
-  topic: 'Organization'
-  children: 
-      -
-          id: '0-0'
-          topic: 'Mission'     
-      -
-          id: '0-1'
-          topic: 'Vision'     
-      
-      -
-          id: '0-2'
-          topic: 'Values'     
-    
-      -
-          id: '0-3'
-          topic: 'Structure'     
-          children:
-              -
-                  id: '0-3-0'
-                  topic: 'Teams'
-      
-      -   
-          id: '0-4'
-          topic: 'Leadership'
-          children:
-              -
-                  id: '0-4-0'
-                  topic: 'Board of Directors'
-              
-              -
-                  id: '0-4-1'
-                  topic: 'Executive Team'
-      
-      -
-          id: '0-5'
-          topic: 'Processes'
-          children:
-              -
-                  id: '0-4-0'
-                  topic: 'Onboarding'
-              
-              -
-                  id: '0-4-1'
-                  topic: 'Performance Management'
-              -   
-                  id: '0-4-2'
-                  topic: 'Decision-making'
-      -   
-          id: '0-6'
-          topic: 'Culture'
-          children:
-              -
-                  id: '0-6-0'
-                  topic: 'Communication'
-              
-              -
-                  id: '0-6-1'
-                  topic: 'Collaboration'
-              -   
-                  id: '0-6-2'
-                  topic: 'Innovation'
-      
-      -   
-          id: '0-7'
-          topic: 'Environment'
-          children:
-              -
-                  id: '0-7-0'
-                  topic: 'Physical'
-              
-              -
-                  id: '0-7-1'
-                  topic: 'Digital'
-              
-        
+class: 'go.TreeModel'
+nodeDataArray:
+  - key: '0'
+    text: 'Organization'
+    loc: '0 0'
+  - key: '0-0'
+    parent: '0'
+    text: 'Mission'
+    brush: 'skyblue'
+    dir: 'right'
+    loc: '77 -22'
+  - key: '0-1'
+    parent: '0'
+    text: 'Vision'
+    brush: 'skyblue'
+    dir: 'right'
+    loc: '200 -48'
+  - key: '0-2'
+    parent: '0'
+    text: 'Values'
+    brush: 'skyblue'
+    dir: 'right'
+    loc: '200 -22'
+  - key: '0-3'
+    parent: '0'
+    text: 'Structure'
+    brush: 'skyblue'
+    dir: 'right'
+    loc: '200 4'
+  - key: '0-3-0'
+    parent: '0-3'
+    text: 'Teams'
+    brush: 'skyblue'
+    dir: 'right'
+    loc: '77 43'
+  - key: '0-4'
+    parent: '0'
+    text: 'Planning'
+    brush: 'darkseagreen'
+    dir: 'right'
+    loc: '203 30'
+  - key: '0-4-0'
+    parent: '0-4'
+    text: 'Board of Directors'
+    brush: 'darkseagreen'
+    dir: 'right'
+    loc: '274 17'
+  - key: '0-4-1'
+    parent: '0-4'
+    text: 'Executive Team'
+    brush: 'darkseagreen'
+    dir: 'right'
+    loc: '274 43'
+  - key: '0-5'
+    parent: '0'
+    text: 'Process'
+    brush: 'darkseagreen'
+    dir: 'right'
+    loc: '203 56'
+  - key: '0-5-0'
+    parent: '0-5'
+    text: 'Onboarding'
+    brush: 'palevioletred'
+    dir: 'left'
+    loc: '-20 -31.75'
+  - key: '0-5-1'
+    parent: '0-5'
+    text: 'Performance Management'
+    brush: 'palevioletred'
+    dir: 'left'
+    loc: '-117 -64.25'
+  - key: '0-5-2'
+    parent: '0-5'
+    text: 'Decision-making'
+    brush: 'palevioletred'
+    dir: 'left'
+    loc: '-117 -25.25'
+  - key: '0-6'
+    parent: '0'
+    text: 'Culture'
+    brush: 'palevioletred'
+    dir: 'left'
+    loc: '-117 0.75'
+  - key: '0-6-0'
+    parent: '0-6'
+    text: 'Communication'
+    brush: 'palevioletred'
+    dir: 'left'
+    loc: '-251 -77.25'
+  - key: '0-6-1'
+    parent: '0-6'
+    text: 'Collaboration'
+    brush: 'palevioletred'
+    dir: 'left'
+    loc: '-251 -51.25'
+  - key: '0-7'
+    parent: '0'
+    text: 'Environment'
+    brush: 'coral'
+    dir: 'left'
+    loc: '-20 52.75'
+  - key: '0-7-0'
+    parent: '0-7'
+    text: 'Physical'
+    brush: 'coral'
+    dir: 'left'
+    loc: '-103 26.75'
+  - key: '0-7-1'
+    parent: '0-7'
+    text: 'Digital'
+    brush: 'coral'
+    dir: 'left'
+    loc: '-103 52.75'
 `;
 // export const MIND_MAP_PROMPT_HELPER = `
 // create a mind map for vacation planning to london
