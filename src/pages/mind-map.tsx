@@ -61,96 +61,90 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
   const { isSubmitting } = formState;
 
   const playgroundResponseHandlers = async ({ prompt }: { prompt: string }) => {
-    try {
-      setLoading(true);
+    const payload = {
+      model: 'text-davinci-003',
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 128,
+      best_of: 1,
+      prompt,
+    };
 
-      const payload = {
-        model: 'text-davinci-003',
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 128,
-        best_of: 1,
-        prompt,
-      };
-
-      await fetchEventSource(OPENAPI_API_ENDPOINT, {
-        headers: {
-          Authorization: `Bearer ${OPENAPI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-        body: JSON.stringify(payload),
-        async onopen(response) {
-          if (
-            response.ok &&
-            response.headers.get('content-type') === EventStreamContentType
-          ) {
-            return; // everything's good
-          } else if (
-            response.status >= 400 &&
-            response.status < 500 &&
-            response.status !== 429
-          ) {
-            // client-side errors are usually non-retriable:
-            // throw new FatalError();
-          } else {
-            // throw new RetriableError();
-          }
-        },
-        onmessage(msg) {
-          if (msg.data === '[DONE]') {
-            setTriggerNext((t) => t + 1);
-            return;
-          }
-          const { choices: resChoices } = JSON.parse(msg.data);
-
-          if (resChoices.length) {
-            const text = resChoices[0].text as string;
-            const finishReason = resChoices[0].finish_reason as string;
-
-            setResponse((prevResponse) => {
-              const newResponse = { ...prevResponse };
-              // return { ...prevResponse, failed: true };
-              if (!newResponse.data.length) {
-                const now = moment();
-                newResponse.createdAt = now.format('LLL');
-                newResponse.data = [text];
-              } else {
-                newResponse.text = newResponse.text + text;
-                newResponse.data = [...newResponse.data, text];
-              }
-
-              newResponse.finishReason = finishReason;
-              return newResponse;
-            });
-
-            // if(finishReason==='length'){
-
-            // }
-          }
-
-          // if the server emits an error message, throw an exception
-          // so it gets handled by the onerror callback below:
-          if (msg.event === 'FatalError') {
-            // throw new FatalError(msg.data);
-          }
-        },
-        onclose() {
-          // if the server closes the connection unexpectedly, retry:
+    await fetchEventSource(OPENAPI_API_ENDPOINT, {
+      headers: {
+        Authorization: `Bearer ${OPENAPI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify(payload),
+      async onopen(response) {
+        if (
+          response.ok &&
+          response.headers.get('content-type') === EventStreamContentType
+        ) {
+          return; // everything's good
+        } else if (
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 429
+        ) {
+          // client-side errors are usually non-retriable:
+          // throw new FatalError();
+        } else {
           // throw new RetriableError();
-        },
-        onerror(err) {
-          // if (err instanceof FatalError) {
-          //   throw err; // rethrow to stop the operation
-          // } else {
-          //   // do nothing to automatically retry. You can also
-          //   // return a specific retry interval here.
+        }
+      },
+      onmessage(msg) {
+        if (msg.data === '[DONE]') {
+          setTriggerNext((t) => t + 1);
+          return;
+        }
+        const { choices: resChoices } = JSON.parse(msg.data);
+
+        if (resChoices.length) {
+          const text = resChoices[0].text as string;
+          const finishReason = resChoices[0].finish_reason as string;
+
+          setResponse((prevResponse) => {
+            const newResponse = { ...prevResponse };
+            // return { ...prevResponse, failed: true };
+            if (!newResponse.data.length) {
+              const now = moment();
+              newResponse.createdAt = now.format('LLL');
+              newResponse.data = [text];
+            } else {
+              newResponse.text = newResponse.text + text;
+              newResponse.data = [...newResponse.data, text];
+            }
+
+            newResponse.finishReason = finishReason;
+            return newResponse;
+          });
+
+          // if(finishReason==='length'){
+
           // }
-        },
-      });
-    } catch (e) {
-      setLoading(false);
-    }
+        }
+
+        // if the server emits an error message, throw an exception
+        // so it gets handled by the onerror callback below:
+        if (msg.event === 'FatalError') {
+          // throw new FatalError(msg.data);
+        }
+      },
+      onclose() {
+        // if the server closes the connection unexpectedly, retry:
+        // throw new RetriableError();
+      },
+      onerror(err) {
+        // if (err instanceof FatalError) {
+        //   throw err; // rethrow to stop the operation
+        // } else {
+        //   // do nothing to automatically retry. You can also
+        //   // return a specific retry interval here.
+        // }
+      },
+    });
   };
 
   const getPrompt = (text: string) => {
@@ -205,35 +199,11 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
     }
   };
 
-  const processResponse = (response: ResponseItem[]) => {
-    const nodesObj: { [key: string]: any } = {};
-    const edgesObj: { [key: string]: any } = {};
-
-    processResponseHelper(response, 0, 1200, '', nodesObj, edgesObj);
-    console.log(`nodesObj->`, nodesObj);
-    console.log(`edgesObj->`, edgesObj);
-
-    return {
-      nodes: Object.keys(nodesObj).map((key) => ({
-        ...nodesObj[key],
-        id: key,
-      })),
-      edges: Object.keys(edgesObj).map((key) => ({
-        ...edgesObj[key],
-        id: key,
-      })),
-    };
-  };
-
   const handleInitialDataComplete = async () => {
     console.log(`response->`, response);
     let parsedSchema: any = jsYml.load(response.text.trim());
 
     console.log(`parsedSchema->`, parsedSchema);
-
-    // const rootState = processResponse(tempData as ResponseItem[]);
-
-    // console.log(`rootState->`, rootState);
 
     setResponse((prevResponse) => {
       const newResponse = { ...prevResponse };
@@ -246,6 +216,8 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
 
   const fetchPendingResponse = async () => {
     try {
+      setLoading(true);
+
       setErrorMessage('');
 
       if (response.finishReason == 'length') {
@@ -285,7 +257,12 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
   };
 
   const renderAction = () => {
-    if (isSubmitting || loading) return <CircularProgress size={16} />;
+    if (isSubmitting || loading)
+      return (
+        <div className="px-2">
+          <CircularProgress size={16} />
+        </div>
+      );
 
     return (
       <IconButton type="submit">
@@ -307,6 +284,7 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
             <div className="p-6 w-full  max-w-lg">
               <div
                 className={cx(
+                  'relative',
                   'flex items-center overflow-hidden rounded-full',
                   'w-full',
                   'bg-background-light',
@@ -314,11 +292,13 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
                 )}
               >
                 <input
-                  className="py-3 px-4 bg-transparent outline-none w-full"
-                  placeholder="e.g. Create a mindmapPage for a vacation planning to london"
+                  className="py-3 pl-4 pr-12 bg-transparent outline-none w-full"
+                  placeholder="e.g. Create a mindmap for a vacation planning to london"
                   {...register('text')}
                 />
-                <div className="px-2">{renderAction()}</div>
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 px-1  ">
+                  {renderAction()}
+                </div>
               </div>
             </div>
           </form>
