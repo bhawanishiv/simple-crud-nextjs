@@ -4,11 +4,23 @@ import Link from 'next/link';
 import cx from 'classnames';
 
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+
+const items = [
+  { title: 'View Schemas', icon: <ViewInArOutlinedIcon />, href: '/schemas' },
+  {
+    title: 'View API docs',
+    icon: <DescriptionOutlinedIcon />,
+    href: '/api-doc',
+  },
+  { title: 'Playground', icon: <PlayArrowOutlinedIcon />, href: '/playground' },
+  { title: 'Mind Map', icon: <AccountTreeOutlinedIcon />, href: '/mind-map' },
+];
 
 type HomePageProps = {};
 
@@ -17,63 +29,20 @@ const HomePage: React.FC<HomePageProps> = (props) => {
     return (
       <main>
         <div className="h-screen w-screen flex items-center justify-center">
-          <ul className="flex items-center gap-3">
-            <li>
-              <Typography
-                component={Link}
-                sx={{
-                  ':hover': {
-                    color: 'primary',
-                  },
-                }}
-                href="/schemas"
-              >
-                <ViewInArOutlinedIcon />
-                <span className="px-2">View Schemas</span>
-              </Typography>
-            </li>
-            <li>
-              <Typography
-                component={Link}
-                sx={{
-                  ':hover': {
-                    color: 'primary',
-                  },
-                }}
-                href="/api-doc"
-              >
-                <DescriptionOutlinedIcon />
-                <span className="px-2">View APIs docs</span>
-              </Typography>
-            </li>
-            <li>
-              <Typography
-                component={Link}
-                sx={{
-                  ':hover': {
-                    color: 'primary',
-                  },
-                }}
-                href="/playground"
-              >
-                <PlayArrowOutlinedIcon />
-                <span className="px-2">Playground</span>
-              </Typography>
-            </li>
-            <li>
-              <Typography
-                component={Link}
-                sx={{
-                  ':hover': {
-                    color: 'primary',
-                  },
-                }}
-                href="/mind-map"
-              >
-                <AccountTreeOutlinedIcon />
-                <span className="px-2"> Mind Map</span>
-              </Typography>
-            </li>
+          <ul className="flex flex-col md:flex-row md:items-center gap-3">
+            {items.map((item, i) => {
+              return (
+                <li key={i}>
+                  <Button
+                    href={item.href}
+                    startIcon={item.icon}
+                    sx={{ borderRadius: 6, px: 2 }}
+                  >
+                    {item.title}
+                  </Button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </main>
