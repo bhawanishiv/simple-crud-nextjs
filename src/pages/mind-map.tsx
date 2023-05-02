@@ -1,14 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import {
-  fetchEventSource,
-  EventStreamContentType,
-} from '@microsoft/fetch-event-source';
+
 import { useForm } from 'react-hook-form';
 import jsYml from 'js-yaml';
 
 import cx from 'classnames';
-import moment from 'moment';
-import _ from 'lodash';
 
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
@@ -19,12 +14,6 @@ import MindMap from '@/components/MindMap';
 
 import { OPENAPI_API_KEY, MIND_MAP_PROMPT_HELPER } from '@/lib/constants';
 import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
-
-type ResponseItem =
-  | string
-  | {
-      [key: string]: ResponseItem[];
-    };
 
 type MindMapPageProps = {};
 
@@ -52,6 +41,7 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
   const {} = props;
 
   const [response, setResponse] = useState(initialResponse);
+  const [data, setData] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [triggerNext, setTriggerNext] = useState(0);
@@ -63,145 +53,49 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
   const playgroundResponseHandlers = async ({ prompt }: { prompt: string }) => {
     const payload = {
       model: 'text-davinci-003',
-      stream: true,
+      // stream: true,
       temperature: 0.7,
-      max_tokens: 128,
+      max_tokens: 256,
       best_of: 1,
       prompt,
     };
 
-    await fetchEventSource(OPENAPI_API_ENDPOINT, {
+    const res = await fetch(OPENAPI_API_ENDPOINT, {
       headers: {
         Authorization: `Bearer ${OPENAPI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       method: 'POST',
       body: JSON.stringify(payload),
-      async onopen(response) {
-        if (
-          response.ok &&
-          response.headers.get('content-type') === EventStreamContentType
-        ) {
-          return; // everything's good
-        } else if (
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 429
-        ) {
-          // client-side errors are usually non-retriable:
-          // throw new FatalError();
-        } else {
-          // throw new RetriableError();
-        }
-      },
-      onmessage(msg) {
-        if (msg.data === '[DONE]') {
-          setTriggerNext((t) => t + 1);
-          return;
-        }
-        const { choices: resChoices } = JSON.parse(msg.data);
-
-        if (resChoices.length) {
-          const text = resChoices[0].text as string;
-          const finishReason = resChoices[0].finish_reason as string;
-
-          setResponse((prevResponse) => {
-            const newResponse = { ...prevResponse };
-            // return { ...prevResponse, failed: true };
-            if (!newResponse.data.length) {
-              const now = moment();
-              newResponse.createdAt = now.format('LLL');
-              newResponse.data = [text];
-            } else {
-              newResponse.text = newResponse.text + text;
-              newResponse.data = [...newResponse.data, text];
-            }
-
-            newResponse.finishReason = finishReason;
-            return newResponse;
-          });
-
-          // if(finishReason==='length'){
-
-          // }
-        }
-
-        // if the server emits an error message, throw an exception
-        // so it gets handled by the onerror callback below:
-        if (msg.event === 'FatalError') {
-          // throw new FatalError(msg.data);
-        }
-      },
-      onclose() {
-        // if the server closes the connection unexpectedly, retry:
-        // throw new RetriableError();
-      },
-      onerror(err) {
-        // if (err instanceof FatalError) {
-        //   throw err; // rethrow to stop the operation
-        // } else {
-        //   // do nothing to automatically retry. You can also
-        //   // return a specific retry interval here.
-        // }
-      },
     });
+
+    console.log(`res->`, res);
+
+    const data = await res.json();
+    console.log(`data->`, data);
+
+    if (!data || !data.choices || !data.choices.length) throw new Error();
+
+    const { text, finish_reason } = data.choices[data.choices.length - 1];
+
+    setResponse((prevResponse) => {
+      const newResponse = { ...prevResponse };
+      newResponse.text = newResponse.text + text;
+      newResponse.finishReason = finish_reason;
+      return newResponse;
+    });
+
+    setTriggerNext((t) => t + 1);
   };
 
   const getPrompt = (text: string) => {
     return MIND_MAP_PROMPT_HELPER + '\n' + text;
   };
 
-  const processResponseHelper = (
-    nodes: ResponseItem[],
-    depth: number,
-    parentX: number,
-    parentId: string,
-    nodeObj: any,
-    edgesObj: any
-  ) => {
-    const y = depth * 100;
-    for (let i = 0; i < nodes.length; i++) {
-      const id = `${parentId}-${i}`;
-      const x =
-        Math.floor(1200 / nodes.length) * (i + 1) - Math.floor(parentX / 2);
-
-      const node = nodes[i];
-
-      const keys = Object.keys(node);
-
-      const label = typeof node === 'string' ? node : keys[0];
-
-      nodeObj[id] = {
-        data: {
-          label,
-        },
-        position: {
-          x,
-          y,
-        },
-      };
-
-      edgesObj[`e${parentId}-${i}`] = {
-        source: parentId,
-        target: id,
-      };
-
-      if (typeof node === 'object' && Array.isArray(node[keys[0]])) {
-        processResponseHelper(
-          node[keys[0]],
-          depth + 1,
-          x,
-          id,
-          nodeObj,
-          edgesObj
-        );
-      }
-    }
-  };
-
-  const handleInitialDataComplete = async () => {
+  const handleDataComplete = async () => {
     console.log(`response->`, response);
-    let parsedSchema: any = jsYml.load(response.text.trim());
+
+    let parsedSchema: any = jsYml.load(response.text);
 
     console.log(`parsedSchema->`, parsedSchema);
 
@@ -212,12 +106,24 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
       newResponse.rootState = parsedSchema;
       return newResponse;
     });
+
+    setData((d) => {
+      const data = [...d];
+      const lastData = data[data.length - 1];
+      data.push({
+        ...(data.length ? {} : parsedSchema.restSchema),
+        nodeDataArray: [
+          ...(lastData ? lastData.nodeDataArray : []),
+          ...(data.length ? parsedSchema : parsedSchema.nodeDataArray),
+        ],
+      });
+      return data;
+    });
   };
 
   const fetchPendingResponse = async () => {
     try {
       setLoading(true);
-
       setErrorMessage('');
 
       if (response.finishReason == 'length') {
@@ -231,7 +137,7 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
           prompt: prompts.join('\n'),
         });
       } else {
-        await handleInitialDataComplete();
+        await handleDataComplete();
       }
     } catch (e) {
       console.log(`e->`, e);
@@ -256,6 +162,53 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
     }
   };
 
+  const onLoadChildNodes = async (key: string) => {
+    try {
+      setLoading(true);
+      const [{ nodeDataArray }] = data;
+
+      const obj: any = {};
+
+      for (let item of nodeDataArray) {
+        obj[item.key] = item;
+      }
+
+      let item = obj[key];
+
+      const text = `Fetch the child nodes of '${item.text}' mind map`;
+
+      if (!item) throw new Error();
+
+      const parents = [];
+
+      while (Boolean(item)) {
+        parents.push(
+          _.pick(item, ['key', 'text', 'parent', 'dir', 'brush', 'dir'])
+        );
+        item = obj[item.parent];
+      }
+
+      const str = jsYml.dump({ class: 'go.TreeModel', nodeDataArray: parents });
+      const prompt = text + '\n\n' + str;
+
+      console.log(`prompt->`, prompt);
+
+      setResponse({
+        ...initialResponse,
+        query: key,
+        prompt,
+        finishReason: 'length',
+      });
+      await playgroundResponseHandlers({
+        prompt,
+      });
+    } catch (e) {
+      console.log(`e->`, e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderAction = () => {
     if (isSubmitting || loading)
       return (
@@ -272,10 +225,22 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
   };
 
   const renderMindMapPage = () => {
+    const model = data[data.length - 1];
+    console.log(`data->`, data);
     return (
       <>
-        {response.completed && response.rootState ? (
-          <MindMap model={response.rootState} />
+        {model ? (
+          <div className="relative">
+            <MindMap model={model} onLoadChildNodes={onLoadChildNodes} />
+            {loading && (
+              <div
+                className="flex flex-col items-center justify-center w-screen h-screen absolute left-0 top-0 z-10"
+                style={{ backgroundColor: '#d7d7d760' }}
+              >
+                <CircularProgress size={16} />
+              </div>
+            )}
+          </div>
         ) : (
           <form
             className="w-screen h-screen flex flex-col items-center justify-center"
