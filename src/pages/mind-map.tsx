@@ -7,8 +7,11 @@ import cx from 'classnames';
 import _ from 'lodash';
 
 import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 
+import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 
 import MindMap from '@/components/MindMap';
@@ -50,6 +53,13 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
   const { formState, register, handleSubmit } = useForm();
 
   const { isSubmitting } = formState;
+
+  const handleResetState = () => {
+    setLoading(false);
+    setResponse(initialResponse);
+    setData([]);
+    setErrorMessage('');
+  };
 
   const playgroundResponseHandlers = async ({ prompt }: { prompt: string }) => {
     const payload = {
@@ -140,8 +150,9 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
       } else {
         await handleDataComplete();
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log(`e->`, e);
+      setErrorMessage(e.message);
     } finally {
       setLoading(false);
     }
@@ -208,8 +219,9 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
       await playgroundResponseHandlers({
         prompt,
       });
-    } catch (e) {
+    } catch (e: any) {
       console.log(`e->`, e);
+      setErrorMessage(e.message);
     } finally {
       setLoading(false);
     }
@@ -230,6 +242,20 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
     );
   };
 
+  const renderResetAction = () => {
+    return (
+      <div className="absolute right-0 top-0 p-6 z-10">
+        <Button
+          endIcon={<RefreshOutlinedIcon />}
+          sx={{ borderRadius: 6 }}
+          onClick={handleResetState}
+        >
+          Reset
+        </Button>
+      </div>
+    );
+  };
+
   const renderMindMapPage = () => {
     const model = data[data.length - 1];
     console.log(`data->`, data);
@@ -246,13 +272,14 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
                 <CircularProgress size={16} />
               </div>
             )}
+            {renderResetAction()}
           </div>
         ) : (
           <form
-            className="w-screen h-screen flex flex-col items-center justify-center"
+            className="relative w-screen h-screen flex flex-col items-center justify-center"
             onSubmit={handleSubmit(handleTriggerInitialQuery)}
           >
-            <div className="p-6 w-full  max-w-lg">
+            <div className="p-6 w-full max-w-lg">
               <div
                 className={cx(
                   'relative',
@@ -270,6 +297,11 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
                 <div className="absolute right-0 top-1/2 transform -translate-y-1/2 px-1  ">
                   {renderAction()}
                 </div>
+              </div>
+              <div className="px-2">
+                <Typography color="red" fontSize={12}>
+                  {errorMessage}
+                </Typography>
               </div>
             </div>
           </form>
