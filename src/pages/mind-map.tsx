@@ -112,7 +112,7 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
       const data = [...d];
       const lastData = data[data.length - 1];
       data.push({
-        ...(data.length ? {} : parsedSchema.restSchema),
+        ...(data.length ? {} : parsedSchema),
         nodeDataArray: [
           ...(lastData ? lastData.nodeDataArray : []),
           ...(data.length ? parsedSchema : parsedSchema.nodeDataArray),
@@ -166,19 +166,24 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
   const onLoadChildNodes = async (key: string) => {
     try {
       setLoading(true);
-      const [{ nodeDataArray }] = data;
+
+      const { nodeDataArray } = data[data.length - 1];
 
       const obj: any = {};
+      let root: any;
 
       for (let item of nodeDataArray) {
         obj[item.key] = item;
+        if (item.key === '0') {
+          root = item;
+        }
       }
 
       let item = obj[key];
 
-      const text = `Fetch the child nodes of '${item.text}' mind map`;
-
       if (!item) throw new Error();
+
+      const text = `Fetch the child nodes of '${item.text}' mind map\nNote: '${item.text}' is sub mind map of '${root.text}' mind map`;
 
       const parents = [];
 
@@ -189,8 +194,8 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
         item = obj[item.parent];
       }
 
-      const str = jsYml.dump({ class: 'go.TreeModel', nodeDataArray: parents });
-      const prompt = text + '\n\n' + str;
+      const str = jsYml.dump({ parents });
+      const prompt = text + '\n\n' + str + '\nremainingNodes:';
 
       console.log(`prompt->`, prompt);
 
