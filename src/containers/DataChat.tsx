@@ -5,7 +5,7 @@ import {
   EventStreamContentType,
 } from '@microsoft/fetch-event-source';
 import z, { ZodError } from 'zod';
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 import moment from 'moment';
 import _ from 'lodash';
 import jsYml from 'js-yaml';
@@ -18,12 +18,7 @@ import Button from '@mui/material/Button';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFilledWhiteOutlined';
 
-import {
-  BASE_INPUT_MODEL_PROMPT_JSON,
-  BASE_INPUT_MODEL_PROMPT_YAML,
-  OPENAPI_API_KEY,
-  OPERATION_GPT_TEXT_YAML,
-} from '@/lib/constants';
+import { OPERATION_GPT_TEXT_YAML } from '@/lib/constants';
 import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
 import { fieldTypes } from '@/interfaces/DynamicSchema';
 
@@ -35,7 +30,7 @@ import {
   IDynamicSchemaField,
   RelatedTypeEnum,
 } from '@/interfaces/DynamicSchema';
-import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
+import { OPENAI_COMPLETION_API_ENDPOINT } from '@/lib/urls';
 import {
   CreateOperationRequest,
   OperationRequest,
@@ -224,10 +219,9 @@ const DataChat: React.FC<DataChatProps> = (props) => {
         prompt,
       };
 
-      await fetchEventSource(OPENAPI_API_ENDPOINT, {
+      await fetchEventSource(OPENAI_COMPLETION_API_ENDPOINT, {
         signal: abortControllerRef.current.signal,
         headers: {
-          Authorization: `Bearer ${OPENAPI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         method: 'POST',
@@ -600,14 +594,14 @@ const DataChat: React.FC<DataChatProps> = (props) => {
   const renderDataChat = () => {
     return (
       <div
-        className={cx(
+        className={cn(
           'relative flex flex-col w-full',
           response.text && 'bg-background-light rounded-t-xl'
         )}
       >
         <form className="w-full" onSubmit={handleSubmit(handleInputSubmit)}>
           <div
-            className={cx(
+            className={cn(
               'flex items-center w-full overflow-hidden rounded-full',
               response.text ? '' : 'border border-gray'
             )}

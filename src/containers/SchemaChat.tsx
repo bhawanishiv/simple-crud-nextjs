@@ -4,8 +4,8 @@ import {
   fetchEventSource,
   EventStreamContentType,
 } from '@microsoft/fetch-event-source';
+
 import z, { ZodError } from 'zod';
-import cx from 'classnames';
 import moment from 'moment';
 import _ from 'lodash';
 import jsYml from 'js-yaml';
@@ -21,9 +21,8 @@ import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFil
 import {
   BASE_INPUT_MODEL_PROMPT_JSON,
   BASE_INPUT_MODEL_PROMPT_YAML,
-  OPENAPI_API_KEY,
 } from '@/lib/constants';
-import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { fieldTypes } from '@/interfaces/DynamicSchema';
 
 import api from '@/services/api';
@@ -34,7 +33,7 @@ import {
   IDynamicSchemaField,
   RelatedTypeEnum,
 } from '@/interfaces/DynamicSchema';
-import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
+import { OPENAI_COMPLETION_API_ENDPOINT } from '@/lib/urls';
 
 const getPromptPreText = () => {
   return jsYml.dump({
@@ -183,10 +182,9 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
         prompt,
       };
 
-      await fetchEventSource(OPENAPI_API_ENDPOINT, {
+      await fetchEventSource(OPENAI_COMPLETION_API_ENDPOINT, {
         signal: abortControllerRef.current.signal,
         headers: {
-          Authorization: `Bearer ${OPENAPI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         method: 'POST',
@@ -466,7 +464,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
   const renderGPTChat = () => {
     return (
       <div
-        className={cx(
+        className={cn(
           'relative flex flex-col w-full',
           response.text && 'bg-background-light rounded-t-xl'
         )}
@@ -476,7 +474,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
           onSubmit={handleSubmit(handlePlaygroundInputSubmit)}
         >
           <div
-            className={cx(
+            className={cn(
               'flex items-center w-full overflow-hidden rounded-full',
               response.text ? '' : 'border border-gray'
             )}

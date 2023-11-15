@@ -2,18 +2,23 @@ import { connect, Mongoose } from 'mongoose';
 
 const uri = process.env.MONGODB_URI || '';
 
-let clientPromise: Promise<Mongoose>;
-
-if (!process.env.MONGODB_URI) {
+if (!uri) {
   throw new Error('Add Mongo URI to .env.local');
 }
-if (process.env.NODE_ENV === 'development') {
-  if (!(global as any)._mongoClientPromise) {
-    (global as any)._mongoClientPromise = connect(uri);
-  }
-  clientPromise = (global as any)._mongoClientPromise;
-} else {
-  clientPromise = connect(uri);
-}
 
-export default clientPromise;
+let cachedDb: Mongoose;
+
+export const connectToDatabase = async () => {
+  if (cachedDb) {
+    return cachedDb;
+  }
+
+  try {
+    const db = await connect(uri, {});
+    cachedDb = db;
+    return db;
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
+    throw error;
+  }
+};

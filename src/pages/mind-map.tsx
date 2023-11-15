@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import jsYml from 'js-yaml';
 
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 import _ from 'lodash';
 
 import CircularProgress from '@mui/material/CircularProgress';
@@ -16,8 +16,8 @@ import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 
 import MindMap from '@/components/MindMap';
 
-import { OPENAPI_API_KEY, MIND_MAP_PROMPT_HELPER } from '@/lib/constants';
-import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
+import { MIND_MAP_PROMPT_HELPER } from '@/lib/constants';
+import { OPENAI_COMPLETION_API_ENDPOINT } from '@/lib/urls';
 
 type MindMapPageProps = {};
 
@@ -71,9 +71,8 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
       prompt,
     };
 
-    const res = await fetch(OPENAPI_API_ENDPOINT, {
+    const res = await fetch(OPENAI_COMPLETION_API_ENDPOINT, {
       headers: {
-        Authorization: `Bearer ${OPENAPI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       method: 'POST',
@@ -281,7 +280,7 @@ const MindMapPage: React.FC<MindMapPageProps> = (props) => {
           >
             <div className="p-6 w-full max-w-lg">
               <div
-                className={cx(
+                className={cn(
                   'relative',
                   'flex items-center overflow-hidden rounded-full',
                   'w-full',

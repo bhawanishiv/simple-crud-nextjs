@@ -1,6 +1,6 @@
 import React from 'react';
 
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 
 type DialogProps = {
   open: boolean;
@@ -14,7 +14,7 @@ const Dialog: React.FC<DialogProps> = (props) => {
 
   const renderDialog = () => {
     return (
-      <dialog open={open} className={cx('dialog', open && 'open')}>
+      <dialog open={open} className={cn('dialog', open && 'open')}>
         <div className="dialog__content">
           <div className="actions__container">
             <div />

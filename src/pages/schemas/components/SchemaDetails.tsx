@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 import {
   IDynamicSchema,
   IDynamicSchemaField,

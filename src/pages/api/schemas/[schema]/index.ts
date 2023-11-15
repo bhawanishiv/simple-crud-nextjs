@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import { Schema, z, ZodError } from 'zod';
 import _ from 'lodash';
 
-import mongoClient from '@/lib/mongo';
+import { connectToDatabase } from '@/lib/mongo';
 import { getDynamicSchema } from '@/lib/dynamic-schema';
 import DynamicSchemaField from '@/models/DynamicSchemaField';
 import DynamicSchema from '@/models/DynamicSchema';
@@ -63,7 +63,7 @@ const prepareSchema = (fields: IDynamicSchemaField[]) => {
 
 const createItem = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    await mongoClient;
+    await connectToDatabase();
 
     const schemaId = z.string().trim().parse(req.query['schema']);
 
@@ -125,7 +125,7 @@ const createItem = async (req: NextApiRequest, res: NextApiResponse) => {
 
 const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    await mongoClient;
+    await connectToDatabase();
 
     const schemaId = z.string().trim().parse(req.query['schema']);
     const itemId = z.string().trim().parse(req.body.id);
@@ -199,7 +199,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
 
 const deleteItem = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    await mongoClient;
+    await connectToDatabase();
 
     const schemaId = z.string().trim().parse(req.query['schema']);
     const itemId = z.string().trim().parse(req.body.id);

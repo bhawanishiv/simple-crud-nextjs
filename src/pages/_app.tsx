@@ -1,14 +1,17 @@
 import React from 'react';
 import Head from 'next/head';
 import { AppProps } from 'next/app';
+import { Roboto } from 'next/font/google';
+
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 
-import theme from '@/themes';
+import theme, { roboto } from '@/themes';
 import createEmotionCache from '@/lib/createEmotionCache';
+import { cn } from '@/lib/utils';
 
 import '@/styles/globals.css';
 import '@/styles/styles.css';
@@ -39,7 +42,9 @@ export default function MyApp(props: MyAppProps) {
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <LocalizationProvider dateAdapter={AdapterMoment}>
-          <Component {...pageProps} />
+          <main className={cn(roboto.className)}>
+            <Component {...pageProps} />
+          </main>
         </LocalizationProvider>
       </ThemeProvider>
     </CacheProvider>

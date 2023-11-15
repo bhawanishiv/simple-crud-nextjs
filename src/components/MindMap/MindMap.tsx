@@ -1,7 +1,7 @@
 import Script from 'next/script';
 import React, { useRef, useEffect, useState } from 'react';
 
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 
 import CircularProgress from '@mui/material/CircularProgress';
 

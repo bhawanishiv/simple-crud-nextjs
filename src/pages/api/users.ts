@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z, ZodError } from 'zod';
 
-import mongoClient from '@/lib/mongo';
+import { connectToDatabase } from '@/lib/mongo';
 import User from '@/models/User';
 
 const CreateUserSchema = z.object({
@@ -44,7 +44,7 @@ type Data = {
 const getUsers = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { limit, skip, sort } = GetUsersSchema.parse(req.query);
-    await mongoClient;
+    await connectToDatabase();
 
     const users = await User.aggregate([
       { $match: {} },
@@ -90,7 +90,7 @@ const createUser = async (req: NextApiRequest, res: NextApiResponse) => {
     const user = CreateUserSchema.parse(req.body);
     // type User = z.infer<typeof CreateUserSchema>;
 
-    await mongoClient;
+    await connectToDatabase();
 
     const emailExists = await User.findOne({ email: user.email });
 
@@ -121,7 +121,7 @@ const updateUser = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { uid, ...rest } = user;
 
-    await mongoClient;
+    await connectToDatabase();
 
     const emailExists = await User.findOne({ email: user.email });
 
@@ -155,7 +155,7 @@ const deleteUser = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { uid } = user;
 
-    await mongoClient;
+    await connectToDatabase();
 
     const deleted = await User.findByIdAndDelete(uid, {
       returnDocument: 'after',

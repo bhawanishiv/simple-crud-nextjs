@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import _ from 'lodash';
 import { z, ZodError } from 'zod';
 
-import mongoClient from '@/lib/mongo';
+import { connectToDatabase } from '@/lib/mongo';
 import { getDynamicSchema } from '@/lib/dynamic-schema';
 import DynamicSchemaField from '@/models/DynamicSchemaField';
 import DynamicSchema from '@/models/DynamicSchema';
@@ -54,7 +54,7 @@ type Data = {
 
 const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    await mongoClient;
+    await connectToDatabase();
 
     const params = SchemaFieldsSchema.parse(req.body);
 

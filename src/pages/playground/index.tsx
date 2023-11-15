@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 import moment from 'moment';
 
 import Snackbar from '@mui/material/Snackbar';
