@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z, ZodError } from 'zod';
 import _ from 'lodash';
 
-import mongoClient from '@/lib/mongo';
+import { connectToDatabase } from '@/lib/mongo';
 import DynamicSchema from '@/models/DynamicSchema';
 
 const CreateSchemaSchema = z.object({
@@ -40,7 +40,7 @@ type Data = {
 const getSchemas = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { query, limit, skip, sort } = GetSchemasSchema.parse(req.query);
-    await mongoClient;
+    await connectToDatabase();
 
     let filter = query
       ? {
@@ -93,7 +93,7 @@ const createSchema = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const schema = CreateSchemaSchema.parse(req.body);
 
-    await mongoClient;
+    await connectToDatabase();
 
     const schemaExists = await DynamicSchema.findOne({ name: schema.name });
 
@@ -124,7 +124,7 @@ const updateSchema = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { id, ...rest } = schema;
 
-    await mongoClient;
+    await connectToDatabase();
 
     const updatedSchema = await DynamicSchema.findByIdAndUpdate(
       id,

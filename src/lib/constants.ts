@@ -1,5 +1,3 @@
-export const OPENAPI_API_KEY = process.env.NEXT_PUBLIC_OPENAPI_API_KEY;
-
 export const BASE_INPUT_MODEL_PROMPT_JSON = `
 generate a schema to track software bugs
 

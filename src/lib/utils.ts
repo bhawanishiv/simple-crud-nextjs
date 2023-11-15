@@ -1,6 +1,9 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
 import { CustomEventService } from '@/lib/event-source';
-import { OPENAPI_API_ENDPOINT } from '@/lib/urls';
-import { OPENAPI_API_KEY } from '@/lib/constants';
+import { OPENAI_COMPLETION_API_ENDPOINT } from '@/lib/urls';
+import {} from '@/lib/constants';
 import { AbortSignal } from '@/lib/abort-controller';
 
 export interface XHRParams {
@@ -10,6 +13,10 @@ export interface XHRParams {
   onEnd: (d?: any) => any;
   onError: (d?: any) => any;
   xhr?: XMLHttpRequest;
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }
 
 export const schemaFinder = (schemaStr: string) => {
@@ -32,9 +39,8 @@ export const getGPTResponseSSE = ({
   xhr,
 }: XHRParams) => {
   return new Promise((resolve, reject) => {
-    const se = new CustomEventService(OPENAPI_API_ENDPOINT, {
+    const se = new CustomEventService(OPENAI_COMPLETION_API_ENDPOINT, {
       headers: {
-        Authorization: `Bearer ${OPENAPI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       method: 'POST',

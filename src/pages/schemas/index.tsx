@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -25,6 +25,7 @@ import AddOrUpdateSchema from './components/AddOrUpdateSchema';
 
 const getSchemas = async (skip: number = 0, limit: number = 10) => {
   const res = await fetch(`/api/schemas?limit=${limit}&skip=${skip}`);
+  if (!res.ok) return null;
   const data = await res.json();
   return data;
 };
@@ -74,13 +75,9 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
           <CircularProgress size={16} />
         </div>
       );
-    if (!data)
-      return (
-        <div className="flex flex-col items-center justify-center h-screen w-screen">
-          <div>Not found</div>
-        </div>
-      );
-    const { count, schemas } = data;
+
+    const { count, schemas = [] } = data || {};
+
     return (
       <div>
         <AddOrUpdateSchema

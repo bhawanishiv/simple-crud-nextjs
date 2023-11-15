@@ -1,6 +1,6 @@
 import React from 'react';
 import { NextPage } from 'next';
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 
 import useSwr from 'swr';
 

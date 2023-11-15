@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import _ from 'lodash';
 import { z, ZodError } from 'zod';
 
-import mongoClient from '@/lib/mongo';
+import { connectToDatabase } from '@/lib/mongo';
 import DynamicSchemaField from '@/models/DynamicSchemaField';
 import { FieldTypeEnum, RelatedTypeEnum } from '@/interfaces/DynamicSchema';
 import DynamicSchema from '@/models/DynamicSchema';
@@ -44,7 +44,7 @@ const getSchemaAndFields = async (
   res: NextApiResponse
 ) => {
   try {
-    await mongoClient;
+    await connectToDatabase();
 
     const schemaName = z
       .string()
@@ -107,7 +107,7 @@ const createField = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const name = field.name || _.camelCase(field.title);
 
-    await mongoClient;
+    await connectToDatabase();
 
     const fieldNameExists = await DynamicSchemaField.findOne({
       $and: [
@@ -151,7 +151,7 @@ const updateField = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { id, ...rest } = field;
 
-    await mongoClient;
+    await connectToDatabase();
 
     const updatedField = await DynamicSchemaField.findByIdAndUpdate(
       id,

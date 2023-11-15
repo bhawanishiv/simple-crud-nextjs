@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import _ from 'lodash';
-import cx from 'classnames';
+import { cn } from '@/lib/utils';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
