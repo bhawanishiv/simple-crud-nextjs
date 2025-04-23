@@ -19,7 +19,6 @@ import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFilledWhiteOutlined';
 
 import { OPERATION_GPT_TEXT_YAML } from '@/lib/constants';
-import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
 import { fieldTypes } from '@/interfaces/DynamicSchema';
 
 import api from '@/services/api';
@@ -55,7 +54,7 @@ const updateOperation = async (schema: IDynamicSchema, payload: any) => {
   const res = await api.request(
     `/api/schemas/${schema.id}/update`,
     'POST',
-    payload
+    payload,
   );
 
   const data = await res.json();
@@ -97,7 +96,7 @@ const SchemaWizardSchema = z.object({
           z.array(z.string().trim()),
         ])
         .optional(),
-    })
+    }),
   ),
 });
 
@@ -149,7 +148,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
           schema: _.pick(schema, schemaFields),
           fields: fields.map((field) => _.pick(field, fieldFields)),
         },
-        {}
+        {},
       );
 
       return (
@@ -184,9 +183,9 @@ const DataChat: React.FC<DataChatProps> = (props) => {
   }) => {
     const promises = [];
 
-    for (let field of fields.filter((f) => f.type === 'related')) {
+    for (const field of fields.filter((f) => f.type === 'related')) {
       promises.push(
-        api.request(`/api/schemas/${field.relatedSchema}/fields`, 'GET', {})
+        api.request(`/api/schemas/${field.relatedSchema}/fields`, 'GET', {}),
       );
     }
 
@@ -197,7 +196,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       data.push(await res[i].json());
     }
 
-    let parsed = data.map((d) => ({
+    const parsed = data.map((d) => ({
       schema: _.pick(d.schema, schemaFields),
       fields: d.fields.map((f: any) => _.pick(f, fieldFields)),
     }));
@@ -290,7 +289,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
           //   throw err; // rethrow to stop the operation
           // } else {
           //   // do nothing to automatically retry. You can also
-          //   // return a specific retry interval here.
+          //   return a specific retry interval here.
           // }
         },
       });
@@ -333,7 +332,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       {
         quotingType: '"',
         forceQuotes: true,
-      }
+      },
     );
     const prompt =
       'Detect the type of operation being requested\n\n' +
@@ -392,7 +391,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
   const prepareSchema = (fields: IDynamicSchemaField[]) => {
     const schemaObj: { [key: string]: any } = {};
 
-    for (let field of fields) {
+    for (const field of fields) {
       schemaObj[field.name] = getFieldSchema(field);
     }
 
@@ -403,7 +402,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
     try {
       setLoading(true);
 
-      let parsedSchema: any = jsYml.load(response.text.trim());
+      const parsedSchema: any = jsYml.load(response.text.trim());
 
       const ZodSchema = prepareSchema(fields);
 
@@ -423,7 +422,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       const res = await api.request(
         `/api/schemas/${schema.id}/items`,
         'POST',
-        parsedItems
+        parsedItems,
       );
 
       const resData = await res.json();
@@ -444,7 +443,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
 
   const handleExecuteCreateResponse = async (
     req: CreateOperationRequest,
-    query: string
+    query: string,
   ) => {
     try {
       setLoading(true);
@@ -489,7 +488,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
   const handleExecuteResponse = async () => {
     try {
       setLoading(true);
-      let parsedSchema: any = jsYml.load(response.text.trim());
+      const parsedSchema: any = jsYml.load(response.text.trim());
 
       if (!parsedSchema.response) {
         throw new Error('No valid response found');
@@ -509,7 +508,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
         case 'ADD': {
           await handleExecuteCreateResponse(
             parsedSchema.response,
-            response.query
+            response.query,
           );
           break;
         }
@@ -538,7 +537,7 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       setErrorMessage('');
 
       if (response.finishReason == 'length') {
-        let prompts = [response.prompt, response.text];
+        const prompts = [response.prompt, response.text];
         setResponse((prevResponse) => {
           prevResponse.pending = true;
           return prevResponse;
@@ -596,14 +595,14 @@ const DataChat: React.FC<DataChatProps> = (props) => {
       <div
         className={cn(
           'relative flex flex-col w-full',
-          response.text && 'bg-background-light rounded-t-xl'
+          response.text && 'bg-background-light rounded-t-xl',
         )}
       >
         <form className="w-full" onSubmit={handleSubmit(handleInputSubmit)}>
           <div
             className={cn(
               'flex items-center w-full overflow-hidden rounded-full',
-              response.text ? '' : 'border border-gray'
+              response.text ? '' : 'border border-gray',
             )}
           >
             <input

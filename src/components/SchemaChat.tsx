@@ -80,7 +80,7 @@ const SchemaWizardSchema = z.object({
           z.array(z.string().trim()),
         ])
         .optional(),
-    })
+    }),
   ),
 });
 
@@ -135,10 +135,10 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
               'relationType',
               'options',
               'default',
-            ])
+            ]),
           ),
         },
-        {}
+        {},
       );
 
       return (
@@ -154,7 +154,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
     return preText + '\n' + BASE_INPUT_MODEL_PROMPT_YAML;
   }, [schema, fields]);
 
-  const { formState, register, watch, handleSubmit } = useForm({});
+  const { formState, register, handleSubmit } = useForm({});
 
   const { isSubmitting } = formState;
 
@@ -350,7 +350,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
       setErrorMessage('');
 
       if (response.finishReason == 'length') {
-        let prompts = [baseModel, response.query, response.text];
+        const prompts = [baseModel, response.query, response.text];
         setResponse((prevResponse) => {
           prevResponse.pending = true;
           return prevResponse;
@@ -397,7 +397,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
       const parsedObj = SchemaWizardSchema.parse(parsedSchema);
 
       const fieldsByName: { [key: string]: any } = {};
-      for (let field of fields) {
+      for (const field of fields) {
         fieldsByName[field.name] = 1;
       }
 
@@ -407,7 +407,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
       };
 
       const newFields = [];
-      for (let field of parsedObj.fields) {
+      for (const field of parsedObj.fields) {
         if (fieldsByName[field.name]) {
           continue;
         }
@@ -466,7 +466,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
       <div
         className={cn(
           'relative flex flex-col w-full',
-          response.text && 'bg-background-light rounded-t-xl'
+          response.text && 'bg-background-light rounded-t-xl',
         )}
       >
         <form
@@ -476,7 +476,7 @@ const GPTChat: React.FC<GPTChatProps> = (props) => {
           <div
             className={cn(
               'flex items-center w-full overflow-hidden rounded-full',
-              response.text ? '' : 'border border-gray'
+              response.text ? '' : 'border border-gray',
             )}
           >
             <input

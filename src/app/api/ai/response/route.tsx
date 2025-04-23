@@ -27,8 +27,7 @@ export async function POST(req: Request) {
           model: openai(process.env.OPENAI_MODEL || '', {
             structuredOutputs: true,
           }),
-          schema:
-            (schemas[schema as keyof typeof schemas] as ZodType<any>) ?? null,
+          schema: schemas[schema as keyof typeof schemas] as ZodType,
         });
 
         return result.toTextStreamResponse();
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
       const result = await generateObject({
         ...restBody,
         model: openai(process.env.OPENAI_MODEL || ''),
-        schema: schemas[schema as keyof typeof schemas] ?? null,
+        schema: schemas[schema as keyof typeof schemas] as ZodType,
       });
       return result.toJsonResponse();
     }
@@ -67,13 +66,13 @@ export async function POST(req: Request) {
         headers: {
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
   } catch (error) {
     console.error('An error occurred:', error);
     return new Response(
       error instanceof Error ? error.message : 'Internal Server Error',
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

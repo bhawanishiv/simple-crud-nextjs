@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { cn } from '@/lib/utils';
 import _ from 'lodash';
 
 import useSwr from 'swr';
-import useSWRInfinite from 'swr/infinite';
 
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -31,7 +29,7 @@ import AddOrUpdateSchemaField from './components/AddOrUpdateSchemaField';
 import AddOrUpdateSchemaItem from './components/AddOrUpdateSchemaItem';
 import DeleteItemDialog from './components/DeleteItemDialog';
 
-import DataChat from 'src/containers/DataChat';
+import DataChat from '@/components/DataChat';
 
 const LIMIT = 100;
 
@@ -51,11 +49,11 @@ const getReferencedItems = async (data: any) => {
 
   const { fields, items } = data;
 
-  let ids: { [key: string]: string[] } = {};
+  let ids: Record<string, string[]> = {};
 
-  for (let item of items) {
-    for (let field of fields.filter(
-      (f: IDynamicSchemaField) => f.type === 'related'
+  for (const item of items) {
+    for (const field of fields.filter(
+      (f: IDynamicSchemaField) => f.type === 'related',
     )) {
       if (!ids[field.relatedSchema]) ids[field.relatedSchema] = [];
 
@@ -76,13 +74,13 @@ const getReferencedItems = async (data: any) => {
   }
 
   const promises = [];
-  for (let schema in ids) {
+  for (const schema in ids) {
     promises.push(
       api.request(`/api/schemas/${schema}/details`, 'POST', {
         limit: ids[schema].length || 10,
         skip: 0,
         ids: ids[schema],
-      })
+      }),
     );
   }
 
@@ -96,7 +94,7 @@ const getReferencedItems = async (data: any) => {
     const res = await results[i].json();
     const itemsObj: { [key: string]: any } = {};
     if (res) {
-      for (let resItem of res.items) {
+      for (const resItem of res.items) {
         itemsObj[resItem.id] = resItem;
       }
     }
@@ -109,11 +107,7 @@ const getReferencedItems = async (data: any) => {
   return responses;
 };
 
-type SchemaPageProps = {};
-
-const SchemaPage: React.FC<SchemaPageProps> = (props) => {
-  const {} = props;
-
+const SchemaPage = () => {
   const router = useRouter();
 
   const [pageIndex, setPageIndex] = useState(0);
@@ -124,7 +118,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
   // );
   const { data, error, isValidating, mutate } = useSwr(
     ['/api/schemas', router.query.schema, pageIndex, queryParams],
-    getSchemaItems
+    getSchemaItems,
   );
 
   // const { data, error, mutate, size, setSize, isValidating } = useSWRInfinite(
@@ -145,7 +139,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
     isValidating: isRefItemValidating,
   } = useSwr(
     isLoadingInitialData ? null : 'getReferencedItems',
-    async () => await getReferencedItems(data ? data[0] : null)
+    async () => await getReferencedItems(data ? data[0] : null),
   );
 
   // const items = data ? [].concat(...data) : [];
@@ -234,7 +228,7 @@ const SchemaPage: React.FC<SchemaPageProps> = (props) => {
         f !== 'updatedAt' &&
         f !== 'createdAt' &&
         f !== '__v' &&
-        typeof item[f] !== 'object'
+        typeof item[f] !== 'object',
     );
   };
 

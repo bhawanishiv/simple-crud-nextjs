@@ -33,11 +33,19 @@ type TFormValues = {
   text: string;
 };
 
+type TNodeData = {
+  key: string;
+  text: string;
+  parent: string;
+  dir?: string;
+  brush?: string;
+};
+
 const MindMapClientPage = () => {
   const suggestionsQuery = useSuspenseQuery(mindMapSuggestionsOptions);
 
   console.log(`suggestionsQuery->`, suggestionsQuery);
-  const [rootData, setRootData] = useState<any[]>([]);
+  const [rootData, setRootData] = useState<TGoMindMapSchema[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const aiMutation = useMutation<TGoMindMapSchema | null, Error, TAiRequest>({
@@ -61,7 +69,7 @@ const MindMapClientPage = () => {
     setRootData([]);
   };
 
-  const addRootData = (data: any) => {
+  const addRootData = (data: TGoMindMapSchema | null) => {
     if (!data) return;
     setRootData((d) => {
       const newData = [...d];
@@ -78,7 +86,7 @@ const MindMapClientPage = () => {
   };
 
   const handleTriggerInitialQuery: SubmitHandler<TFormValues> = async (
-    values
+    values,
   ) => {
     try {
       const response = await aiMutation.mutateAsync({
@@ -98,8 +106,8 @@ const MindMapClientPage = () => {
     try {
       const { nodeDataArray } = rootData[rootData.length - 1];
 
-      const obj: Record<string, { text: string; parent: string }> = {};
-      let root: any;
+      const obj: Record<string, TNodeData> = {};
+      let root: TNodeData | undefined;
 
       for (const item of nodeDataArray) {
         obj[item.key] = item;
@@ -112,13 +120,13 @@ const MindMapClientPage = () => {
 
       if (!item) throw new Error();
 
-      const text = `Fetch the child nodes of '${item.text}' mind map\nNote: '${item.text}' is sub mind map of '${root.text}' mind map`;
+      const text = `Fetch the child nodes of '${item.text}' mind map\nNote: '${item.text}' is sub mind map of '${root?.text}' mind map`;
 
-      const parents = [];
+      const parents: TNodeData[] = [];
 
       while (Boolean(item)) {
         parents.push(
-          _.pick(item, ['key', 'text', 'parent', 'dir', 'brush', 'dir'])
+          _.pick(item, ['key', 'text', 'parent', 'dir', 'brush', 'dir']),
         );
         item = obj[item.parent];
       }
@@ -227,13 +235,13 @@ const MindMapClientPage = () => {
                         if (e.key === 'Tab') {
                           const suggestions = suggestionsQuery.data?.list || [];
                           const currentIndex = suggestions.findIndex(
-                            (item) => item.text === field.value
+                            (item) => item.text === field.value,
                           );
 
                           console.log(
                             `currentIndex->`,
                             currentIndex,
-                            suggestions
+                            suggestions,
                           );
                           if (currentIndex === suggestions.length - 1) {
                             return; // Do nothing if all suggestions have been cycled through

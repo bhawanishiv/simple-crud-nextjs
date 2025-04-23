@@ -60,13 +60,13 @@ const getFieldDef = (field: IDynamicSchemaField) => {
   };
 };
 
-export const getDynamicSchema = <T extends {}>(
+export const getDynamicSchema = <T extends object>(
   name: string,
-  fields: IDynamicSchemaField[]
+  fields: IDynamicSchemaField[],
 ) => {
   const fieldDef: { [key: string]: any } = {};
 
-  for (let field of fields) {
+  for (const field of fields) {
     fieldDef[field.name] = getFieldDef(field);
   }
 

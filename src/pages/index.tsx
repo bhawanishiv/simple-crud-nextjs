@@ -1,9 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
 
-import { cn } from '@/lib/utils';
-
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 
 import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
@@ -22,9 +18,7 @@ const items = [
   { title: 'Mind Map', icon: <AccountTreeOutlinedIcon />, href: '/mind-map' },
 ];
 
-type HomePageProps = {};
-
-const HomePage: React.FC<HomePageProps> = (props) => {
+const HomePage = () => {
   const renderHomePage = () => {
     return (
       <div className="h-screen w-screen flex items-center justify-center">

@@ -3,7 +3,6 @@ import _ from 'lodash';
 
 import { SubmitHandler, Controller, useForm } from 'react-hook-form';
 
-import LoadingButton from '@mui/lab/LoadingButton';
 import Autocomplete from '@mui/material/Autocomplete';
 import Typography from '@mui/material/Typography';
 import Drawer from '@mui/material/Drawer';
@@ -39,7 +38,7 @@ type AddOrUpdateSchemaFieldProps = {
 };
 
 const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
-  props
+  props,
 ) => {
   const { schemaId, field, open, onClose, onSuccess } = props;
 
@@ -55,7 +54,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
   >([]);
 
   const relationFieldType = relationshipItems.find(
-    (r) => r.type === relationType
+    (r) => r.type === relationType,
   );
 
   const { errors, isSubmitting } = formState;
@@ -69,7 +68,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
     setSchemaSearch(value);
     _.debounce(async () => {
       const res = await api.request(
-        `/api/schemas?query=${value}&limit=10&skip=0`
+        `/api/schemas?query=${value}&limit=10&skip=0`,
       );
       const data = await res.json();
       if (data) setSchemasOptions(data.schemas);
@@ -85,8 +84,8 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
       if (!optionsStr.trim()) throw new Error(`No options provided`);
       const options = parseOptions(optionsStr);
 
-      const optionsObj: { [key: string]: number } = {};
-      for (let option of options) {
+      const optionsObj: Record<string, number> = {};
+      for (const option of options) {
         const optionStr = option.trim().toLowerCase();
         if (optionsObj[optionStr])
           throw new Error(`Duplicate option: "${optionStr}" added`);
@@ -131,7 +130,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
       const res = await api.request(
         `/api/schemas/${schemaId}/fields`,
         field ? 'PATCH' : 'POST',
-        payload
+        payload,
       );
       if (!res.ok) {
         // setError("")
@@ -146,7 +145,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
   };
 
   const handleClose = (e: any) => {
-    typeof onClose === 'function' && onClose(e);
+    if (typeof onClose === 'function') onClose(e);
   };
 
   const handleRelationTypeChange = (relation: any) => (e: any) => {
@@ -377,7 +376,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
             {renderFieldOptions()}
           </div>
           <div className="flex items-center py-2">
-            <LoadingButton
+            <Button
               variant="outlined"
               type="submit"
               loading={isSubmitting}
@@ -385,7 +384,7 @@ const AddOrUpdateSchemaField: React.FC<AddOrUpdateSchemaFieldProps> = (
               fullWidth
             >
               Save
-            </LoadingButton>
+            </Button>
           </div>
         </form>
       </Drawer>

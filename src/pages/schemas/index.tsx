@@ -30,20 +30,16 @@ const getSchemas = async (skip: number = 0, limit: number = 10) => {
   return data;
 };
 
-type SchemasPageProps = {};
-
-const SchemasPage: React.FC<SchemasPageProps> = (props) => {
-  const {} = props;
-
+const SchemasPage = () => {
   const router = useRouter();
 
   const { isLoading, isValidating, data, mutate } = useSwr('schemas', () =>
-    getSchemas()
+    getSchemas(),
   );
 
   const [currentSchema, setCurrentSchema] = useState(0);
   const [addOrUpdateSchemaOpen, setAddOrUpdateSchema] = useState<any | boolean>(
-    null
+    null,
   );
 
   const handleAddSchema = () => {
@@ -108,7 +104,11 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
                 return (
                   <ListItem
                     key={schema.id}
-                    selected={index === currentSchema}
+                    // selected={index === currentSchema}
+                    className={cn(
+                      'cursor-pointer hover:bg-gray-100',
+                      index === currentSchema && 'bg-gray-100',
+                    )}
                     secondaryAction={
                       <IconButton
                         edge="end"

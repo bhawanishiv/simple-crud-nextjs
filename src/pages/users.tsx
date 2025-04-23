@@ -1,16 +1,13 @@
 import React from 'react';
 import { NextPage } from 'next';
-import { cn } from '@/lib/utils';
 
 import useSwr from 'swr';
 
 import CircularProgress from '@mui/material/CircularProgress';
 
-import Users from '@/components/Users';
+import Users from '@/components/ui/Users';
 
 import { IUser } from '@/interfaces/User';
-
-interface UsersPageProps {}
 
 const getUsers = async (skip: number = 0, limit: number = 10) => {
   const res = await fetch(`/api/users?limit=${limit}&skip=${skip}`);
@@ -18,7 +15,7 @@ const getUsers = async (skip: number = 0, limit: number = 10) => {
   return data;
 };
 
-const UsersPage: NextPage<UsersPageProps> = (props) => {
+const UsersPage: NextPage = (props) => {
   const {} = props;
   const { isLoading, data, mutate } = useSwr('users', () => getUsers());
 
