@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 import { cn } from '@/lib/utils';
 import _ from 'lodash';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import useSwr from 'swr';
 
@@ -129,7 +129,7 @@ const SchemasPage: React.FC<SchemasPageProps> = (props) => {
                             index === currentSchema ? 'primary' : undefined,
                         }}
                         primary={schema.title}
-                        secondary={moment(schema.updatedAt).format('LLL')}
+                        secondary={dayjs(schema.updatedAt).format('LLL')}
                       />
                     </ListItemButton>
                   </ListItem>

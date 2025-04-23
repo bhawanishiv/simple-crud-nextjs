@@ -6,7 +6,7 @@ import {
 } from '@/interfaces/DynamicSchema';
 
 import useSwr from 'swr';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
@@ -122,7 +122,7 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
                   </div>
                   <div>
                     <Typography className="text-xs" color="gray">
-                      {moment(field.updatedAt).format('LLL')}
+                      {dayjs(field.updatedAt).format('LLL')}
                     </Typography>
                   </div>
                   {/* </div> */}

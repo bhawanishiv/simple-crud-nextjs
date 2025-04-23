@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 
 import { cn } from '@/lib/utils';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import Snackbar from '@mui/material/Snackbar';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -109,7 +109,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
             setChoices((prevChoices) => {
               let newChoices = [...prevChoices];
               if (!newChoices[index]) {
-                const now = moment();
+                const now = dayjs();
 
                 newChoices[index] = {
                   query,
