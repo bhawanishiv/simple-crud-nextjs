@@ -1,10 +1,4 @@
-import Script from 'next/script';
 import React, { useRef, useEffect, useState } from 'react';
-
-import CircularProgress from '@mui/material/CircularProgress';
-
-// const scriptSrc = 'https://unpkg.com/jsmind@0.5/es6/jsmind.js';
-const scriptSrc = 'https://unpkg.com/gojs@2.3.5/release/go.js';
 
 const containerId = 'myDiagramDiv';
 
@@ -12,25 +6,18 @@ type MindMapProps = {
   // mind: any;
   model: any;
   shouldRender: boolean;
+  scriptLoaded?: boolean;
   onLoadChildNodes: (key: string) => Promise<void>;
 };
 
 const MindMap: React.FC<MindMapProps> = (props) => {
-  const { model, shouldRender, onLoadChildNodes } = props;
+  const { model, shouldRender, scriptLoaded, onLoadChildNodes } = props;
 
   const [loadChildNodes, setLoadChildNodes] = useState<string>('');
   const instance = useRef<any>(null);
   const diagram = useRef<any>(null);
 
   const ref = useRef<any>(null);
-
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-
-  console.log(`scriptLoaded->`, scriptLoaded);
-  const onScriptLoad = () => {
-    setScriptLoaded(true);
-    console.log('load');
-  };
 
   const _loadChildNodes = (e: any, obj: any) => {
     const adorn = obj.part;
@@ -265,7 +252,6 @@ const MindMap: React.FC<MindMapProps> = (props) => {
     const go = (window as any).go;
 
     if (!go) return;
-    console.log(`model->`, model);
     if (!model.class) {
       model.class = 'go.TreeModel';
     }
@@ -346,33 +332,8 @@ const MindMap: React.FC<MindMapProps> = (props) => {
   // };
 
   const renderMindMap = () => {
-    return (
-      <>
-        <Script
-          type="text/javascript"
-          src={scriptSrc}
-          onError={(e) => {
-            console.log(`error->`, e);
-          }}
-          onLoad={onScriptLoad}
-          strategy="lazyOnload"
-        />
-
-        <div ref={ref} id={containerId} style={{ height: 800 }} />
-        {scriptLoaded ? null : <CircularProgress size={16} />}
-      </>
-    );
+    return <div ref={ref} id={containerId} style={{ height: 800 }} />;
   };
-
-  useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      document.querySelector(`script[src="${scriptSrc}"]`) &&
-      !scriptLoaded
-    ) {
-      onScriptLoad();
-    }
-  }, [scriptLoaded, model]);
 
   useEffect(() => {
     if (!ref.current || !scriptLoaded || !model || !shouldRender) return;

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import Script from 'next/script';
+import React, { useEffect, useState, KeyboardEvent } from 'react';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import jsYml from 'js-yaml';
@@ -34,6 +35,9 @@ import LoadingText from '@/components/loading-text';
 import { downloadJson } from '@/lib/utils';
 import { useParams, useRouter } from 'next/navigation';
 
+// const scriptSrc = 'https://unpkg.com/jsmind@0.5/es6/jsmind.js';
+const scriptSrc = 'https://unpkg.com/gojs@2.3.5/release/go.js';
+
 // Function to generate a custom unique ID
 function generateCustomId() {
   const timestamp = Date.now().toString();
@@ -63,6 +67,7 @@ const MindMapClientPage = () => {
   const id = params?.['ids']?.at(0) || null;
   const suggestionsQuery = useSuspenseQuery(mindMapSuggestionsOptions);
 
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [rootData, setRootData] = useState<TGoMindMapSchema[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentKey, setCurrentKey] = useState<string | null>(null);
@@ -93,6 +98,10 @@ const MindMapClientPage = () => {
   });
 
   const { isSubmitting } = formState;
+
+  const onScriptLoad = () => {
+    setScriptLoaded(true);
+  };
 
   const handleResetState = () => {
     setRootData([]);
@@ -160,7 +169,7 @@ const MindMapClientPage = () => {
         router.push(`/mind-map/${newId}`);
       }
     } catch (e) {
-      console.log(`e->`, e);
+      // console.log(`e->`, e);
     }
   };
 
@@ -175,7 +184,7 @@ const MindMapClientPage = () => {
     try {
       data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
     } catch (error) {
-      console.log(`error->`, error);
+      // console.log(`error->`, error);
       data = {};
     } finally {
       return data;
@@ -212,7 +221,6 @@ const MindMapClientPage = () => {
       let finalItem: TNodeData | undefined = obj[currentKey];
 
       while (Boolean(finalItem)) {
-        console.log(`finalItem->`, finalItem);
         parents.push(
           _.pick(finalItem, ['key', 'text', 'parent', 'dir', 'brush', 'dir']),
         );
@@ -221,8 +229,6 @@ const MindMapClientPage = () => {
 
       const str = jsYml.dump({ parents, entireMap: nodeDataArray });
       const prompt = text + '\n\CURRENT_PARENTS:\n' + str + '\n\n';
-
-      console.log(`prompt->`, prompt);
 
       const updatedSystemPrompt = MIND_MAP_PROMPT_HELPER.replace(
         '{{placeholder}}',
@@ -235,14 +241,12 @@ const MindMapClientPage = () => {
         schema: 'mind-map',
       });
 
-      console.log(`new_datadata->`, response);
-
       if (response) {
         addRootData(response, id || '');
       }
       setCurrentKey(null);
     } catch (e) {
-      console.log(`e->`, e);
+      // console.log(`e->`, e);
     } finally {
       //
     }
@@ -341,12 +345,21 @@ const MindMapClientPage = () => {
 
   const renderMindMapPage = () => {
     const model = rootData[rootData.length - 1];
-    console.log(`model->`, model, id);
     return (
       <>
+        <Script
+          type="text/javascript"
+          src={scriptSrc}
+          onError={(e) => {
+            // console.log(`error->`, e);
+          }}
+          onLoad={onScriptLoad}
+          strategy="lazyOnload"
+        />
         {model ? (
           <div className="relative">
             <MindMap
+              scriptLoaded={scriptLoaded}
               shouldRender={!!id}
               model={model}
               onLoadChildNodes={onLoadChildNodes}
@@ -368,6 +381,7 @@ const MindMapClientPage = () => {
                     <TextField
                       fullWidth
                       variant="outlined"
+                      multiline
                       autoFocus
                       disabled={
                         suggestionsQuery.isLoading || aiMutation.isPending
@@ -376,7 +390,7 @@ const MindMapClientPage = () => {
                       slotProps={{
                         input: {
                           classes: {
-                            input: 'py-8',
+                            // input: 'py-8',
                             root: 'rounded-2xl',
                             notchedOutline: 'rounded-2xl',
                           },
@@ -389,34 +403,7 @@ const MindMapClientPage = () => {
                         },
                       }}
                       {...field}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                          const suggestions = suggestionsQuery.data?.list || [];
-                          const currentIndex = suggestions.findIndex(
-                            (item) => item.text === field.value,
-                          );
-
-                          if (suggestions.length === 0) {
-                            return; // Do nothing if there are no suggestions
-                          }
-
-                          let nextIndex = currentIndex;
-                          if (e.key === 'ArrowRight') {
-                            nextIndex =
-                              currentIndex === suggestions.length - 1
-                                ? suggestions.length - 1
-                                : currentIndex + 1;
-                          } else if (e.key === 'ArrowLeft') {
-                            nextIndex =
-                              currentIndex === 0 ? 0 : currentIndex - 1;
-                          }
-
-                          if (nextIndex !== -1) {
-                            field.onChange(suggestions[nextIndex].text || '');
-                          }
-                          e.preventDefault();
-                        }
-                      }}
+                      onKeyDown={handleKeyDown(field)}
                       helperText={
                         aiMutation.isPending ? (
                           <LoadingText isLoading>
@@ -466,6 +453,54 @@ const MindMapClientPage = () => {
       </>
     );
   };
+
+  const handleKeyDown =
+    (field: any) => (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter' || event.key === 'Return') {
+        if (event.shiftKey) {
+          // Allow multi-line input
+          return;
+        }
+
+        event.preventDefault();
+        // Submit the form
+        handleSubmit(handleTriggerInitialQuery)();
+      } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+        const suggestions = suggestionsQuery.data?.list || [];
+        const currentIndex = suggestions.findIndex(
+          (item) => item.text === field.value,
+        );
+
+        if (suggestions.length === 0) {
+          return; // Do nothing if there are no suggestions
+        }
+
+        let nextIndex = currentIndex;
+        if (event.key === 'ArrowRight') {
+          nextIndex =
+            currentIndex === suggestions.length - 1
+              ? suggestions.length - 1
+              : currentIndex + 1;
+        } else if (event.key === 'ArrowLeft') {
+          nextIndex = currentIndex === 0 ? 0 : currentIndex - 1;
+        }
+
+        if (nextIndex > -1) {
+          field.onChange(suggestions[nextIndex].text || '');
+        }
+        event.preventDefault();
+      }
+    };
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      document.querySelector(`script[src="${scriptSrc}"]`) &&
+      !scriptLoaded
+    ) {
+      onScriptLoad();
+    }
+  }, [rootData]);
 
   useEffect(() => {
     if (id) {
