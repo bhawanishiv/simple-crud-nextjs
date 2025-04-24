@@ -38,11 +38,6 @@ export const rateLimit = (
   } = options || DEFAULT_RATE_LIMIT_CONFIG;
   // Check and update current window
 
-  console.log(
-    'idToRequestCount:',
-    { windowSize, feature, maxRequests },
-    JSON.stringify(Object.fromEntries(idToRequestCount)),
-  );
   const now = Date.now();
   const isNewWindow = now - rateLimiter.windowStart > windowSize;
 

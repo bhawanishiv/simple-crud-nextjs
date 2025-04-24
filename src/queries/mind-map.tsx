@@ -15,7 +15,7 @@ const prefetchSuggestions = async () => {
       await generateObjectAction<TListStringSchema>(suggestionsPayload);
     return response;
   } catch (error) {
-    console.error('Error prefetching suggestions:', error);
+    // console.error('Error prefetching suggestions:', error);
     return null;
   }
 };
