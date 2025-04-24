@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import jsYml from 'js-yaml';
@@ -15,6 +15,7 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import EastOutlinedIcon from '@mui/icons-material/EastOutlined';
+import WestOutlinedIcon from '@mui/icons-material/WestOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import ArrowDownwardOutlinedIcon from '@mui/icons-material/ArrowDownwardOutlined';
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
@@ -310,11 +311,16 @@ const MindMapClientPage = () => {
 
   const renderMindMapPage = () => {
     const model = rootData[rootData.length - 1];
+    console.log(`model->`, model, id);
     return (
       <>
         {model ? (
           <div className="relative">
-            <MindMap model={model} onLoadChildNodes={onLoadChildNodes} />
+            <MindMap
+              shouldRender={!!id}
+              model={model}
+              onLoadChildNodes={onLoadChildNodes}
+            />
             {renderResetAction()}
           </div>
         ) : (
@@ -336,32 +342,48 @@ const MindMapClientPage = () => {
                       disabled={
                         suggestionsQuery.isLoading || aiMutation.isPending
                       }
-                      placeholder={
-                        suggestionsQuery.isLoading || !suggestionsQuery.data
-                          ? 'e.g. A vacation planning to london'
-                          : `Press [Tab] to opt from ${suggestionsQuery.data.list.length} suggestions`
-                      }
+                      placeholder={'e.g. A vacation planning to london'}
+                      slotProps={{
+                        input: {
+                          classes: {
+                            input: 'py-8',
+                            root: 'rounded-2xl',
+                            notchedOutline: 'rounded-2xl',
+                          },
+
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              {renderAction()}
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
                       {...field}
                       onKeyDown={(e) => {
-                        if (e.key === 'Tab') {
+                        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                           const suggestions = suggestionsQuery.data?.list || [];
                           const currentIndex = suggestions.findIndex(
                             (item) => item.text === field.value,
                           );
 
-                          console.log(
-                            `currentIndex->`,
-                            currentIndex,
-                            suggestions,
-                          );
-                          if (currentIndex === suggestions.length - 1) {
-                            return; // Do nothing if all suggestions have been cycled through
+                          if (suggestions.length === 0) {
+                            return; // Do nothing if there are no suggestions
                           }
 
-                          const nextIndex =
-                            currentIndex === -1 ? 0 : currentIndex + 1;
+                          let nextIndex = currentIndex;
+                          if (e.key === 'ArrowRight') {
+                            nextIndex =
+                              currentIndex === suggestions.length - 1
+                                ? suggestions.length - 1
+                                : currentIndex + 1;
+                          } else if (e.key === 'ArrowLeft') {
+                            nextIndex =
+                              currentIndex === 0 ? 0 : currentIndex - 1;
+                          }
 
-                          field.onChange(suggestions[nextIndex].text || '');
+                          if (nextIndex !== -1) {
+                            field.onChange(suggestions[nextIndex].text || '');
+                          }
                           e.preventDefault();
                         }
                       }}
@@ -370,22 +392,23 @@ const MindMapClientPage = () => {
                           <LoadingText isLoading>
                             Fetching suitable results
                           </LoadingText>
-                        ) : null
+                        ) : suggestionsQuery.isLoading ||
+                          !suggestionsQuery.data ? null : (
+                          <span className="flex items-center gap-2">
+                            <Typography component="span" variant="body2">
+                              Use
+                            </Typography>
+                            <WestOutlinedIcon fontSize="small" />
+                            <Typography component="span" variant="body2">
+                              or{' '}
+                            </Typography>
+                            <EastOutlinedIcon fontSize="small" />
+                            <Typography component="span" variant="body2">
+                              to see suggestions
+                            </Typography>
+                          </span>
+                        )
                       }
-                      slotProps={{
-                        input: {
-                          classes: {
-                            input: 'py-8',
-                            root: 'rounded-2xl',
-                            notchedOutline: 'rounded-2xl',
-                          },
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              {renderAction()}
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
                     />
                   );
                 }}
@@ -418,6 +441,7 @@ const MindMapClientPage = () => {
     if (id) {
       try {
         const storedMap = localStorage.getItem(`mind-map:${id}`);
+        console.log(`storedMap->`, storedMap);
         if (storedMap) {
           setRootData([JSON.parse(storedMap)]);
         }

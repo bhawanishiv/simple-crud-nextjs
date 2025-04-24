@@ -11,11 +11,12 @@ const containerId = 'myDiagramDiv';
 type MindMapProps = {
   // mind: any;
   model: any;
+  shouldRender: boolean;
   onLoadChildNodes: (key: string) => Promise<void>;
 };
 
 const MindMap: React.FC<MindMapProps> = (props) => {
-  const { model, onLoadChildNodes } = props;
+  const { model, shouldRender, onLoadChildNodes } = props;
 
   const [loadChildNodes, setLoadChildNodes] = useState<string>('');
   const instance = useRef<any>(null);
@@ -25,8 +26,10 @@ const MindMap: React.FC<MindMapProps> = (props) => {
 
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
+  console.log(`scriptLoaded->`, scriptLoaded);
   const onScriptLoad = () => {
     setScriptLoaded(true);
+    console.log('load');
   };
 
   const _loadChildNodes = (e: any, obj: any) => {
@@ -286,7 +289,9 @@ const MindMap: React.FC<MindMapProps> = (props) => {
   function layoutAll() {
     const myDiagram = diagram.current;
     const root = myDiagram.findNodeForKey(0);
-    if (root === null) return;
+    if (root === null) {
+      return;
+    }
     myDiagram.startTransaction('Layout');
     // split the nodes and links into two collections
     const go = (window as any).go;
@@ -343,7 +348,16 @@ const MindMap: React.FC<MindMapProps> = (props) => {
   const renderMindMap = () => {
     return (
       <>
-        <Script type="text/javascript" src={scriptSrc} onLoad={onScriptLoad} />
+        <Script
+          type="text/javascript"
+          src={scriptSrc}
+          onError={(e) => {
+            console.log(`error->`, e);
+          }}
+          onLoad={onScriptLoad}
+          strategy="lazyOnload"
+        />
+
         <div ref={ref} id={containerId} style={{ height: 800 }} />
         {scriptLoaded ? null : <CircularProgress size={16} />}
       </>
@@ -351,14 +365,27 @@ const MindMap: React.FC<MindMapProps> = (props) => {
   };
 
   useEffect(() => {
-    if (!ref.current || !scriptLoaded || !model) return;
+    if (
+      typeof window !== 'undefined' &&
+      document.querySelector(`script[src="${scriptSrc}"]`) &&
+      !scriptLoaded
+    ) {
+      onScriptLoad();
+    }
+  }, [scriptLoaded, model]);
+
+  useEffect(() => {
+    if (!ref.current || !scriptLoaded || !model || !shouldRender) return;
+
     if (diagram.current) {
       load();
       layoutAll();
     } else {
       init();
     }
-  }, [ref.current, model, scriptLoaded]);
+
+    return () => {};
+  }, [ref.current, model, shouldRender, scriptLoaded]);
 
   useEffect(() => {
     (async () => {
