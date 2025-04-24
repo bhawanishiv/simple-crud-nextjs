@@ -252,7 +252,6 @@ const MindMap: React.FC<MindMapProps> = (props) => {
     const go = (window as any).go;
 
     if (!go) return;
-    console.log(`model->`, model);
     if (!model.class) {
       model.class = 'go.TreeModel';
     }

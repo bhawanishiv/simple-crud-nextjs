@@ -101,7 +101,6 @@ const MindMapClientPage = () => {
 
   const onScriptLoad = () => {
     setScriptLoaded(true);
-    console.log('load');
   };
 
   const handleResetState = () => {
@@ -170,7 +169,7 @@ const MindMapClientPage = () => {
         router.push(`/mind-map/${newId}`);
       }
     } catch (e) {
-      console.log(`e->`, e);
+      // console.log(`e->`, e);
     }
   };
 
@@ -185,7 +184,7 @@ const MindMapClientPage = () => {
     try {
       data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
     } catch (error) {
-      console.log(`error->`, error);
+      // console.log(`error->`, error);
       data = {};
     } finally {
       return data;
@@ -222,7 +221,6 @@ const MindMapClientPage = () => {
       let finalItem: TNodeData | undefined = obj[currentKey];
 
       while (Boolean(finalItem)) {
-        console.log(`finalItem->`, finalItem);
         parents.push(
           _.pick(finalItem, ['key', 'text', 'parent', 'dir', 'brush', 'dir']),
         );
@@ -231,8 +229,6 @@ const MindMapClientPage = () => {
 
       const str = jsYml.dump({ parents, entireMap: nodeDataArray });
       const prompt = text + '\n\CURRENT_PARENTS:\n' + str + '\n\n';
-
-      console.log(`prompt->`, prompt);
 
       const updatedSystemPrompt = MIND_MAP_PROMPT_HELPER.replace(
         '{{placeholder}}',
@@ -245,14 +241,12 @@ const MindMapClientPage = () => {
         schema: 'mind-map',
       });
 
-      console.log(`new_datadata->`, response);
-
       if (response) {
         addRootData(response, id || '');
       }
       setCurrentKey(null);
     } catch (e) {
-      console.log(`e->`, e);
+      // console.log(`e->`, e);
     } finally {
       //
     }
@@ -351,14 +345,13 @@ const MindMapClientPage = () => {
 
   const renderMindMapPage = () => {
     const model = rootData[rootData.length - 1];
-    console.log(`model->`, model, id);
     return (
       <>
         <Script
           type="text/javascript"
           src={scriptSrc}
           onError={(e) => {
-            console.log(`error->`, e);
+            // console.log(`error->`, e);
           }}
           onLoad={onScriptLoad}
           strategy="lazyOnload"
@@ -491,8 +484,6 @@ const MindMapClientPage = () => {
         } else if (event.key === 'ArrowLeft') {
           nextIndex = currentIndex === 0 ? 0 : currentIndex - 1;
         }
-
-        console.log(`suggestions->`, suggestions, nextIndex);
 
         if (nextIndex > -1) {
           field.onChange(suggestions[nextIndex].text || '');
