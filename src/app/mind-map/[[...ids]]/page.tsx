@@ -3,7 +3,9 @@ import { getQueryClient } from '@/lib/query-client';
 import { mindMapSuggestionsOptions } from '@/queries/mind-map';
 import MindMapClientPage from './_components/mind-map-client';
 
-export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+// or false, to 404 on unknown paths
+export const revalidate = 60;
 
 export default async function MindMapPage() {
   const queryClient = getQueryClient();
