@@ -1,8 +1,6 @@
 import Script from 'next/script';
 import React, { useRef, useEffect, useState } from 'react';
 
-import { cn } from '@/lib/utils';
-
 import CircularProgress from '@mui/material/CircularProgress';
 
 // const scriptSrc = 'https://unpkg.com/jsmind@0.5/es6/jsmind.js';
@@ -13,11 +11,12 @@ const containerId = 'myDiagramDiv';
 type MindMapProps = {
   // mind: any;
   model: any;
+  shouldRender: boolean;
   onLoadChildNodes: (key: string) => Promise<void>;
 };
 
 const MindMap: React.FC<MindMapProps> = (props) => {
-  const { model, onLoadChildNodes } = props;
+  const { model, shouldRender, onLoadChildNodes } = props;
 
   const [loadChildNodes, setLoadChildNodes] = useState<string>('');
   const instance = useRef<any>(null);
@@ -25,11 +24,12 @@ const MindMap: React.FC<MindMapProps> = (props) => {
 
   const ref = useRef<any>(null);
 
-  const diagramRef = useRef<any>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
+  console.log(`scriptLoaded->`, scriptLoaded);
   const onScriptLoad = () => {
     setScriptLoaded(true);
+    console.log('load');
   };
 
   const _loadChildNodes = (e: any, obj: any) => {
@@ -38,93 +38,6 @@ const MindMap: React.FC<MindMapProps> = (props) => {
     const key = node.key;
     setLoadChildNodes(key);
   };
-
-  // const initDiagram = () => {
-  //   const $ = go.GraphObject.make;
-  //   // set your license key here before creating the diagram: go.Diagram.licenseKey = "...";
-  //   const diagram = $(go.Diagram, {
-  //     'undoManager.isEnabled': true, // must be set to allow for model change listening
-  //     // 'undoManager.maxHistoryLength': 0,  // uncomment disable undo/redo functionality
-  //     'clickCreatingTool.archetypeNodeData': {
-  //       text: 'new node',
-  //       color: 'lightblue',
-  //     },
-  //     model: new go.GraphLinksModel({
-  //       linkKeyProperty: 'key', // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
-  //     }),
-  //   });
-
-  //   // a node consists of some text with a line shape underneath
-  //   diagram.nodeTemplate = $(
-  //     go.Node,
-  //     'Vertical',
-  //     { selectionObjectName: 'TEXT' },
-  //     $(
-  //       go.TextBlock,
-  //       {
-  //         name: 'TEXT',
-  //         minSize: new go.Size(30, 15),
-  //         editable: true,
-  //       },
-  //       // remember not only the text string but the scale and the font in the node data
-  //       new go.Binding('text', 'text').makeTwoWay(),
-  //       new go.Binding('scale', 'scale').makeTwoWay(),
-  //       new go.Binding('font', 'font').makeTwoWay()
-  //     ),
-  //     $(
-  //       go.Shape,
-  //       'LineH',
-  //       {
-  //         stretch: go.GraphObject.Horizontal,
-  //         strokeWidth: 3,
-  //         height: 3,
-  //         // this line shape is the port -- what links connect with
-  //         portId: '',
-  //         fromSpot: go.Spot.LeftRightSides,
-  //         toSpot: go.Spot.LeftRightSides,
-  //       },
-  //       new go.Binding('stroke', 'brush')
-  //       // make sure links come in from the proper direction and go out appropriately
-  //       // new go.Binding('fromSpot', 'dir', (d) => spotConverter(d, true)),
-  //       // new go.Binding('toSpot', 'dir', (d) => spotConverter(d, false))
-  //     ),
-  //     // remember the locations of each node in the node data
-  //     new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(
-  //       go.Point.stringify
-  //     )
-  //     // make sure text "grows" in the desired direction
-  //     // new go.Binding('locationSpot', 'dir', (d) => spotConverter(d, false))
-  //   );
-
-  //   // selected nodes show a button for adding children
-  //   diagram.nodeTemplate.selectionAdornmentTemplate = $(
-  //     go.Adornment,
-  //     'Spot',
-  //     $(
-  //       go.Panel,
-  //       'Auto',
-  //       // this Adornment has a rectangular blue Shape around the selected node
-  //       $(go.Shape, { fill: null, stroke: 'dodgerblue', strokeWidth: 3 }),
-  //       $(go.Placeholder, { margin: new go.Margin(4, 4, 0, 4) })
-  //     )
-  //     // and this Adornment has a Button to the right of the selected node
-  //     // $(
-  //     //   'Button',
-  //     //   {
-  //     //     alignment: go.Spot.Right,
-  //     //     alignmentFocus: go.Spot.Left,
-  //     //     click: addNodeAndLink, // define click behavior for this Button in the Adornment
-  //     //   },
-  //     //   $(
-  //     //     go.TextBlock,
-  //     //     '+', // the Button content
-  //     //     { font: 'bold 8pt sans-serif' }
-  //     //   )
-  //     // )
-  //   );
-
-  //   return diagram;
-  // };
 
   function init() {
     const go = (window as any).go;
@@ -171,7 +84,7 @@ const MindMap: React.FC<MindMapProps> = (props) => {
         // remember not only the text string but the scale and the font in the node data
         new go.Binding('text', 'text').makeTwoWay(),
         new go.Binding('scale', 'scale').makeTwoWay(),
-        new go.Binding('font', 'font').makeTwoWay()
+        new go.Binding('font', 'font').makeTwoWay(),
       ),
       $(
         go.Shape,
@@ -185,15 +98,15 @@ const MindMap: React.FC<MindMapProps> = (props) => {
           fromSpot: go.Spot.LeftRightSides,
           toSpot: go.Spot.LeftRightSides,
         },
-        new go.Binding('stroke', 'brush')
+        new go.Binding('stroke', 'brush'),
         // make sure links come in from the proper direction and go out appropriately
         // new go.Binding('fromSpot', 'dir', (d) => spotConverter(d, true)),
         // new go.Binding('toSpot', 'dir', (d) => spotConverter(d, false))
       ),
       // remember the locations of each node in the node data
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(
-        go.Point.stringify
-      )
+        go.Point.stringify,
+      ),
       // make sure text "grows" in the desired direction
       // new go.Binding('locationSpot', 'dir', (d) => spotConverter(d, false))
     );
@@ -207,8 +120,8 @@ const MindMap: React.FC<MindMapProps> = (props) => {
         'Auto',
         // this Adornment has a rectangular blue Shape around the selected node
         $(go.Shape, { fill: null, stroke: 'dodgerblue', strokeWidth: 3 }),
-        $(go.Placeholder, { margin: new go.Margin(4, 4, 0, 4) })
-      )
+        $(go.Placeholder, { margin: new go.Margin(4, 4, 0, 4) }),
+      ),
       // and this Adornment has a Button to the right of the selected node
       // $(
       //   'Button',
@@ -231,7 +144,7 @@ const MindMap: React.FC<MindMapProps> = (props) => {
       'ContextMenu',
       $('ContextMenuButton', $(go.TextBlock, 'Load Child nodes'), {
         click: _loadChildNodes,
-      })
+      }),
       //   $('ContextMenuButton', $(go.TextBlock, 'Smaller'), {
       //     click: (e, obj) => changeTextSize(obj, 1 / 1.1),
       //   }),
@@ -275,8 +188,8 @@ const MindMap: React.FC<MindMapProps> = (props) => {
         new go.Binding('stroke', 'toNode', (n: any) => {
           if (n.data.brush) return n.data.brush;
           return 'black';
-        }).ofObject()
-      )
+        }).ofObject(),
+      ),
     );
 
     // the Diagram's context menu just displays commands for general functionality
@@ -362,7 +275,7 @@ const MindMap: React.FC<MindMapProps> = (props) => {
   function layoutAngle(parts: any, angle: any) {
     const go = (window as any).go;
 
-    var layout = go.GraphObject.make(go.TreeLayout, {
+    const layout = go.GraphObject.make(go.TreeLayout, {
       angle: angle,
       arrangement: go.TreeLayout.ArrangementFixedRoots,
       nodeSpacing: 5,
@@ -375,16 +288,18 @@ const MindMap: React.FC<MindMapProps> = (props) => {
 
   function layoutAll() {
     const myDiagram = diagram.current;
-    var root = myDiagram.findNodeForKey(0);
-    if (root === null) return;
+    const root = myDiagram.findNodeForKey(0);
+    if (root === null) {
+      return;
+    }
     myDiagram.startTransaction('Layout');
     // split the nodes and links into two collections
     const go = (window as any).go;
 
-    var rightward = new go.Set(/*go.Part*/);
-    var leftward = new go.Set(/*go.Part*/);
+    const rightward = new go.Set(/*go.Part*/);
+    const leftward = new go.Set(/*go.Part*/);
     root.findLinksConnected().each((link: any) => {
-      var child = link.toNode;
+      const child = link.toNode;
       if (child.data.dir === 'left') {
         leftward.add(root); // the root node is in both collections
         leftward.add(link);
@@ -431,10 +346,18 @@ const MindMap: React.FC<MindMapProps> = (props) => {
   // };
 
   const renderMindMap = () => {
-    console.log(`scriptLoaded->`, ref.current, scriptLoaded);
     return (
       <>
-        <Script type="text/javascript" src={scriptSrc} onLoad={onScriptLoad} />
+        <Script
+          type="text/javascript"
+          src={scriptSrc}
+          onError={(e) => {
+            console.log(`error->`, e);
+          }}
+          onLoad={onScriptLoad}
+          strategy="lazyOnload"
+        />
+
         <div ref={ref} id={containerId} style={{ height: 800 }} />
         {scriptLoaded ? null : <CircularProgress size={16} />}
       </>
@@ -442,14 +365,27 @@ const MindMap: React.FC<MindMapProps> = (props) => {
   };
 
   useEffect(() => {
-    if (!ref.current || !scriptLoaded || !model) return;
+    if (
+      typeof window !== 'undefined' &&
+      document.querySelector(`script[src="${scriptSrc}"]`) &&
+      !scriptLoaded
+    ) {
+      onScriptLoad();
+    }
+  }, [scriptLoaded, model]);
+
+  useEffect(() => {
+    if (!ref.current || !scriptLoaded || !model || !shouldRender) return;
+
     if (diagram.current) {
       load();
       layoutAll();
     } else {
       init();
     }
-  }, [ref.current, model, scriptLoaded]);
+
+    return () => {};
+  }, [ref.current, model, shouldRender, scriptLoaded]);
 
   useEffect(() => {
     (async () => {

@@ -1,17 +1,19 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  darkMode: ['class'],
-  content: ['src/**/*.{ts,tsx}', 'src/components/**/*.{ts,tsx}'],
+const config = {
+  content: ['./src/pages/**/*.{ts,tsx}', './src/app/**/*.{ts,tsx}'],
+  corePlugins: {
+    preflight: false,
+  },
   theme: {
     extend: {
       colors: {
-        primary: '#556cd6',
-        secondary: '#19857b',
-        'on-secondary': '#FFFFFF',
-        gray: '#dbdbdb',
-        background: '#ffffff',
-        'background-light': '#F0EEED',
-        'on-background-light': '#747474',
+        primary: 'var(--app-mui-palette-primary-main)',
+        secondary: 'var(--app-mui-palette-secondary-main)',
+        'on-secondary': 'var(--app-mui-palette-secondary-contrastText)',
+        gray: 'var(--app-mui-palette-grey-400)',
+        background: 'var(--app-mui-palette-background-default)',
+        'background-light': 'var(--app-mui-palette-background-paper)',
+        'on-background-light': 'var(--app-mui-palette-text-secondary)',
       },
       animation: {
         type: 'type 1.8s ease-out .8s 1 normal both',
@@ -35,3 +37,5 @@ module.exports = {
   },
   plugins: [],
 };
+
+export default config;

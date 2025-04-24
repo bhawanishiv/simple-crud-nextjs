@@ -29,6 +29,14 @@ const theme = createTheme({
   typography: {
     fontFamily: roboto.style.fontFamily,
   },
+  shape: {
+    borderRadius: 8,
+  },
+
+  cssVariables: {
+    cssVarPrefix: 'app-mui',
+    colorSchemeSelector: 'class',
+  },
 });
 
 export default theme;

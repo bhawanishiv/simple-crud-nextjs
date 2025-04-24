@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import Drawer from '@mui/material/Drawer';
-import LoadingButton from '@mui/lab/LoadingButton';
+import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Chip from '@mui/material/Chip';
 
@@ -24,7 +24,7 @@ const AddOrUpdateSchema: React.FC<AddOrUpdateSchemaProps> = (props) => {
   const { formState, register, setError, watch, reset, handleSubmit } = useForm(
     {
       mode: 'all',
-    }
+    },
   );
 
   const { errors, isSubmitting } = formState;
@@ -48,7 +48,7 @@ const AddOrUpdateSchema: React.FC<AddOrUpdateSchemaProps> = (props) => {
       const res = await api.request(
         `/api/schemas/`,
         schema ? 'PATCH' : 'POST',
-        payload
+        payload,
       );
       if (!res.ok) {
         // setError("")
@@ -63,7 +63,7 @@ const AddOrUpdateSchema: React.FC<AddOrUpdateSchemaProps> = (props) => {
   };
 
   const handleClose = (e: any) => {
-    typeof onClose === 'function' && onClose(e);
+    if (typeof onClose === 'function') onClose(e);
   };
 
   const renderAddOrUpdateSchemaField = () => {
@@ -94,7 +94,7 @@ const AddOrUpdateSchema: React.FC<AddOrUpdateSchemaProps> = (props) => {
             </div>
           </div>
           <div className="flex items-center py-2">
-            <LoadingButton
+            <Button
               variant="outlined"
               type="submit"
               loading={isSubmitting}
@@ -102,7 +102,7 @@ const AddOrUpdateSchema: React.FC<AddOrUpdateSchemaProps> = (props) => {
               fullWidth
             >
               Save
-            </LoadingButton>
+            </Button>
           </div>
         </form>
       </Drawer>

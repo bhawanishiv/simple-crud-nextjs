@@ -6,7 +6,7 @@ type DialogProps = {
   open: boolean;
 
   children?: React.ReactNode;
-  onClose?: (event: any) => void;
+  onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 const Dialog: React.FC<DialogProps> = (props) => {

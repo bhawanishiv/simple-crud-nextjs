@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 
-import { cn } from '@/lib/utils';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import Snackbar from '@mui/material/Snackbar';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -21,11 +20,7 @@ import { getGPTResponseSSE, schemaFinder } from '@/lib/utils';
 
 import SchemaWizard from './components/SchemaWizard';
 
-type PlaygroundPageProps = {};
-
-const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
-  const {} = props;
-
+const PlaygroundPage = () => {
   const router = useRouter();
 
   const [withContext, setWithContext] = useState(true);
@@ -92,7 +87,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         },
         onError: () => {
           setChoices((prevChoices) => {
-            let newChoices = [...prevChoices];
+            const newChoices = [...prevChoices];
             newChoices[index] = {
               ...newChoices[index],
               failed: true,
@@ -107,9 +102,9 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
           if (resChoices.length) {
             const text = resChoices[0].text;
             setChoices((prevChoices) => {
-              let newChoices = [...prevChoices];
+              const newChoices = [...prevChoices];
               if (!newChoices[index]) {
-                const now = moment();
+                const now = dayjs();
 
                 newChoices[index] = {
                   query,
@@ -151,7 +146,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
       completed = false;
     } finally {
       setChoices((prevChoices) => {
-        let newChoices = [...prevChoices];
+        const newChoices = [...prevChoices];
         newChoices[lastEndIndex] = {
           ...newChoices[lastEndIndex],
           pending: !responseCompleted,
@@ -160,10 +155,10 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
         return newChoices;
       });
       if (!responseCompleted) {
-        let prompts = [BASE_INPUT_MODEL_PROMPT_JSON];
+        const prompts = [BASE_INPUT_MODEL_PROMPT_JSON];
 
         if (withContext) {
-          for (let choice of choices) {
+          for (const choice of choices) {
             prompts.push(choice.query);
             prompts.push(choice.text);
           }
@@ -189,13 +184,13 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = (props) => {
 
   const handlePlaygroundInputSubmit = async (values: any) => {
     try {
-      let newCount = count + 1;
+      const newCount = count + 1;
       setCount(newCount);
 
-      let prompts = [BASE_INPUT_MODEL_PROMPT_JSON];
+      const prompts = [BASE_INPUT_MODEL_PROMPT_JSON];
 
       if (withContext) {
-        for (let choice of choices) {
+        for (const choice of choices) {
           prompts.push(choice.query);
           prompts.push(choice.text);
         }

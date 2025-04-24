@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
 import mongoose from 'mongoose';
-import { Schema, z, ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import _ from 'lodash';
 
 import { connectToDatabase } from '@/lib/mongo';
@@ -32,7 +32,7 @@ const getFieldSchema = (field: IDynamicSchemaField) => {
           z
             .string()
             .trim()
-            .transform((v) => new mongoose.Types.ObjectId(v))
+            .transform((v) => new mongoose.Types.ObjectId(v)),
         );
       } else {
         schema = z
@@ -54,7 +54,7 @@ const getFieldSchema = (field: IDynamicSchemaField) => {
 const prepareSchema = (fields: IDynamicSchemaField[]) => {
   const schemaObj: { [key: string]: any } = {};
 
-  for (let field of fields) {
+  for (const field of fields) {
     schemaObj[field.name] = getFieldSchema(field);
   }
 
@@ -92,7 +92,7 @@ const addItems = async (req: NextApiRequest, res: NextApiResponse) => {
         relationType: 1,
         relatedSchema: 1,
         options: 1,
-      }
+      },
     ).exec();
 
     if (!fields) throw new Error("Couldn't find schema fields");
@@ -103,7 +103,7 @@ const addItems = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const Model = getDynamicSchema(
       schema.name,
-      fields as IDynamicSchemaField[]
+      fields as IDynamicSchemaField[],
     );
 
     const results = await Model.bulkWrite(
@@ -111,7 +111,7 @@ const addItems = async (req: NextApiRequest, res: NextApiResponse) => {
         insertOne: {
           document: item,
         },
-      }))
+      })),
     );
 
     const response = {
@@ -159,7 +159,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
         relationType: 1,
         relatedSchema: 1,
         options: 1,
-      }
+      },
     ).exec();
 
     if (!fields) throw new Error("Couldn't find schema fields");
@@ -170,7 +170,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const Model = getDynamicSchema(
       schema.name,
-      fields as IDynamicSchemaField[]
+      fields as IDynamicSchemaField[],
     );
 
     const item = await Model.findByIdAndUpdate(
@@ -178,7 +178,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
       { ...values },
       {
         returnDocument: 'after',
-      }
+      },
     ).exec();
 
     if (!item) {
@@ -232,7 +232,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
  */
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<Data>,
 ) {
   switch (req.method) {
     case 'POST': {

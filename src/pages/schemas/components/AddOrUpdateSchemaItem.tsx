@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import _ from 'lodash';
-import { cn } from '@/lib/utils';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
-import LoadingButton from '@mui/lab/LoadingButton';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -39,11 +37,11 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
   const { errors, isSubmitting } = formState;
 
   const [relatedField, setRelatedField] = useState<IDynamicSchemaField | null>(
-    null
+    null,
   );
 
   const [localRefItems, setLocalRefItems] = useState<{ [key: string]: any }>(
-    {}
+    {},
   );
 
   const handleUpdatedRelatedField = (field: IDynamicSchemaField) => () => {
@@ -52,23 +50,23 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
 
   const setLocalRefValues = useCallback(
     (currentItem: any) => {
-      let itemsObj: { [key: string]: any } = {};
+      const itemsObj: Record<string, unknown> = {};
 
-      for (let field of fields.filter((f) => f.type === 'related')) {
+      for (const field of fields.filter((f) => f.type === 'related')) {
         itemsObj[field.name] = currentItem[field.name];
       }
 
       setLocalRefItems(itemsObj);
     },
-    [fields]
+    [fields],
   );
 
   const handleRelatedFieldUpdateSuccess = (
     field: IDynamicSchemaField,
-    data: null | string | string[]
+    data: null | string | string[],
   ) => {
     // onSuccess();
-    let newLocalRefItems: { [key: string]: any } = {
+    const newLocalRefItems: Record<string, unknown> = {
       ...localRefItems,
     };
 
@@ -129,7 +127,7 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
       const res = await api.request(
         `/api/schemas/${schemaId}`,
         item ? 'PATCH' : 'POST',
-        payload
+        payload,
       );
       const data = await res.json();
 
@@ -148,7 +146,7 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
   };
 
   const handleClose = (e: any) => {
-    typeof onClose === 'function' && onClose(e);
+    if (typeof onClose === 'function') onClose(e);
   };
 
   const renderDropdownFieldInput = (field: IDynamicSchemaField) => {
@@ -242,20 +240,22 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
                   onChange={(newValue) => {
                     onChange(newValue?.toISOString());
                   }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      variant="filled"
-                      fullWidth
-                      required={field.required}
-                      helperText={
-                        errors[field.name]
-                          ? (errors[field.name]?.message as React.ReactNode)
-                          : ''
-                      }
-                      error={Boolean(errors[field.name])}
-                    />
-                  )}
+                  slots={{
+                    textField: (params) => (
+                      <TextField
+                        {...params}
+                        variant="filled"
+                        fullWidth
+                        required={field.required}
+                        helperText={
+                          errors[field.name]
+                            ? (errors[field.name]?.message as React.ReactNode)
+                            : ''
+                        }
+                        error={Boolean(errors[field.name])}
+                      />
+                    ),
+                  }}
                 />
               );
             }}
@@ -342,15 +342,15 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
               {renderFormFields()}
             </div>
             <div className="flex items-center py-2">
-              <LoadingButton
+              <Button
                 variant="outlined"
                 type="submit"
                 disableElevation
                 fullWidth
-                loading={isSubmitting}
+                disabled={isSubmitting}
               >
                 Save
-              </LoadingButton>
+              </Button>
             </div>
           </form>
         </Drawer>

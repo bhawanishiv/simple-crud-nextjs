@@ -35,7 +35,7 @@ const SchemaFieldsSchema = z.object({
           .optional(),
         relatedSchema: z.string().optional(),
         relationType: RelatedTypeEnum.optional(),
-      })
+      }),
     )
     .optional(),
   limit: z.number().nonnegative().max(100),
@@ -91,18 +91,18 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
           relatedSchema: 1,
           relationType: 1,
           options: 1,
-        }
+        },
       ).exec());
 
     if (!fields) throw new Error("Couldn't find schema fields");
 
     const Model = getDynamicSchema(
       schema.name,
-      fields as IDynamicSchemaField[]
+      fields as IDynamicSchemaField[],
     );
 
     const { ids, limit, skip, sort, query } = params;
-    let filter = query
+    const filter = query
       ? {
           title: {
             $regex: query,
@@ -225,7 +225,7 @@ const getSchemaItems = async (req: NextApiRequest, res: NextApiResponse) => {
  */
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<Data>,
 ) {
   switch (req.method) {
     case 'POST': {

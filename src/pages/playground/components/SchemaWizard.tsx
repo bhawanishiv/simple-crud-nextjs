@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import z, { ZodError } from 'zod';
 import JSONInput from 'react-json-editor-ajrm';
-//@ts-ignore
+
 import locale from 'react-json-editor-ajrm/locale/en';
 import _ from 'lodash';
 
-import LoadingButton from '@mui/lab/LoadingButton';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -47,7 +46,7 @@ const SchemaWizardSchema = z.object({
           z.array(z.string().trim()),
         ])
         .optional(),
-    })
+    }),
   ),
 });
 
@@ -75,7 +74,7 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
       const res = await api.request(
         '/api/schemas/playground',
         'POST',
-        finalValue
+        finalValue,
       );
 
       const data = await res.json();
@@ -149,14 +148,14 @@ const SchemaWizard: React.FC<SchemaWizardProps> = (props) => {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cancel</Button>
-            <LoadingButton
+            <Button
               onClick={submitSchemaForm}
               loading={loading}
               autoFocus
               disabled={Boolean(errorMessage)}
             >
               Execute
-            </LoadingButton>
+            </Button>
           </DialogActions>
         </Dialog>
       </form>

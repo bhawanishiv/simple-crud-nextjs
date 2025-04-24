@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import Dialog from '@/components/Dialog';
+import Dialog from '@/components/ui/Dialog';
 import { IUser } from '@/interfaces/User';
 
 const roles = [

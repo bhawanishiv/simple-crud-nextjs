@@ -1,8 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
 import mongoose from 'mongoose';
-import { Schema, z, ZodError } from 'zod';
-import _ from 'lodash';
+import { z, ZodError } from 'zod';
 
 import { connectToDatabase } from '@/lib/mongo';
 import { getDynamicSchema } from '@/lib/dynamic-schema';
@@ -32,7 +31,7 @@ const getFieldSchema = (field: IDynamicSchemaField) => {
           z
             .string()
             .trim()
-            .transform((v) => new mongoose.Types.ObjectId(v))
+            .transform((v) => new mongoose.Types.ObjectId(v)),
         );
       } else {
         schema = z
@@ -54,7 +53,7 @@ const getFieldSchema = (field: IDynamicSchemaField) => {
 const prepareSchema = (fields: IDynamicSchemaField[]) => {
   const schemaObj: { [key: string]: any } = {};
 
-  for (let field of fields) {
+  for (const field of fields) {
     schemaObj[field.name] = getFieldSchema(field);
   }
 
@@ -92,7 +91,7 @@ const createItem = async (req: NextApiRequest, res: NextApiResponse) => {
         relationType: 1,
         relatedSchema: 1,
         options: 1,
-      }
+      },
     ).exec();
 
     if (!fields) throw new Error("Couldn't find schema fields");
@@ -103,7 +102,7 @@ const createItem = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const Model = getDynamicSchema(
       schema.name,
-      fields as IDynamicSchemaField[]
+      fields as IDynamicSchemaField[],
     );
 
     const item = new Model({ ...values });
@@ -155,7 +154,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
         relationType: 1,
         relatedSchema: 1,
         options: 1,
-      }
+      },
     ).exec();
 
     if (!fields) throw new Error("Couldn't find schema fields");
@@ -166,7 +165,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const Model = getDynamicSchema(
       schema.name,
-      fields as IDynamicSchemaField[]
+      fields as IDynamicSchemaField[],
     );
 
     const item = await Model.findByIdAndUpdate(
@@ -174,7 +173,7 @@ const updateItem = async (req: NextApiRequest, res: NextApiResponse) => {
       { ...values },
       {
         returnDocument: 'after',
-      }
+      },
     ).exec();
 
     if (!item) {
@@ -229,14 +228,14 @@ const deleteItem = async (req: NextApiRequest, res: NextApiResponse) => {
         relationType: 1,
         relatedSchema: 1,
         options: 1,
-      }
+      },
     ).exec();
 
     if (!fields) throw new Error("Couldn't find schema fields");
 
     const Model = getDynamicSchema(
       schema.name,
-      fields as IDynamicSchemaField[]
+      fields as IDynamicSchemaField[],
     );
 
     const item = await Model.findByIdAndDelete(itemId, {
@@ -351,7 +350,7 @@ const deleteItem = async (req: NextApiRequest, res: NextApiResponse) => {
  */
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<Data>,
 ) {
   switch (req.method) {
     case 'POST': {

@@ -23,12 +23,12 @@ const GetSchemasSchema = z.object({
   query: z.string().trim().optional(),
   limit: z.preprocess(
     (a) => parseInt(z.string().parse(a), 10),
-    z.number().nonnegative().max(100)
+    z.number().nonnegative().max(100),
   ),
 
   skip: z.preprocess(
     (a) => parseInt(z.string().parse(a), 10),
-    z.number().nonnegative()
+    z.number().nonnegative(),
   ),
   sort: z.record(z.string().trim(), z.number()).optional(),
 });
@@ -42,7 +42,7 @@ const getSchemas = async (req: NextApiRequest, res: NextApiResponse) => {
     const { query, limit, skip, sort } = GetSchemasSchema.parse(req.query);
     await connectToDatabase();
 
-    let filter = query
+    const filter = query
       ? {
           title: {
             $regex: query,
@@ -131,7 +131,7 @@ const updateSchema = async (req: NextApiRequest, res: NextApiResponse) => {
       { ...rest },
       {
         returnDocument: 'after',
-      }
+      },
     ).exec();
     if (!updatedSchema) throw new Error("Couldn't find or update the schema");
 
@@ -232,7 +232,7 @@ const updateSchema = async (req: NextApiRequest, res: NextApiResponse) => {
  */
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<Data>,
 ) {
   switch (req.method) {
     case 'GET': {

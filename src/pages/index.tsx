@@ -1,9 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
 
-import { cn } from '@/lib/utils';
-
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 
 import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
@@ -12,24 +8,41 @@ import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 
 const items = [
-  { title: 'View Schemas', icon: <ViewInArOutlinedIcon />, href: '/schemas' },
+  {
+    title: 'View Schemas',
+    disabled: true,
+    icon: <ViewInArOutlinedIcon />,
+    href: '/schemas',
+  },
   {
     title: 'View API docs',
+    disabled: true,
+
     icon: <DescriptionOutlinedIcon />,
     href: '/api-doc',
   },
-  { title: 'Playground', icon: <PlayArrowOutlinedIcon />, href: '/playground' },
-  { title: 'Mind Map', icon: <AccountTreeOutlinedIcon />, href: '/mind-map' },
+  {
+    title: 'Playground',
+    disabled: true,
+    icon: <PlayArrowOutlinedIcon />,
+    href: '/playground',
+  },
+  {
+    title: 'View Mind Map Generator',
+    icon: <AccountTreeOutlinedIcon />,
+    href: '/mind-map',
+  },
 ];
 
-type HomePageProps = {};
-
-const HomePage: React.FC<HomePageProps> = (props) => {
+const HomePage = () => {
   const renderHomePage = () => {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
-        <ul className="flex flex-col md:flex-row md:items-center gap-3">
+        <ul className="flex flex-col md:flex-row md:items-center gap-3 list-none">
           {items.map((item, i) => {
+            if (item.disabled) {
+              return <React.Fragment key={i} />;
+            }
             return (
               <li key={i}>
                 <Button

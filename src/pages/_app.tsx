@@ -1,53 +1,43 @@
 import React from 'react';
 import Head from 'next/head';
 import { AppProps } from 'next/app';
-import { Roboto } from 'next/font/google';
 
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { CacheProvider, EmotionCache } from '@emotion/react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { AppCacheProvider } from '@mui/material-nextjs/v15-pagesRouter';
 
-import theme, { roboto } from '@/themes';
-import createEmotionCache from '@/lib/createEmotionCache';
-import { cn } from '@/lib/utils';
+import StyleProvider from '@/components/style-provider';
+import QueryProvider from '@/components/query-provider';
+
+import { metadataConfig } from '@/lib/constant';
 
 import '@/styles/globals.css';
 import '@/styles/styles.css';
-
-const config = {};
-
-// Client-side cache, shared for the whole session of the user in the browser.
-const clientSideEmotionCache = createEmotionCache();
+import { EmotionCache } from '@emotion/cache';
 
 interface MyAppProps extends AppProps {
-  emotionCache?: EmotionCache;
+  emotionCache?: EmotionCache; // Replace with the correct type for your emotion cache
 }
 
 export default function MyApp(props: MyAppProps) {
-  const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
+  const { Component, pageProps } = props;
 
   return (
-    <CacheProvider value={emotionCache}>
+    <AppCacheProvider {...props}>
       <Head>
-        <title>CRUD Application</title>
+        <title>{metadataConfig.title?.toString() || 'App'}</title>
         <meta content="width=device-width, initial-scale=1" name="viewport" />
-        <meta
-          name="description"
-          content="A Simple CRUD Application built on Next.js"
-        />
+        <meta name="description" content={metadataConfig.description || ''} />
       </Head>
-      <ThemeProvider theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <LocalizationProvider dateAdapter={AdapterMoment}>
-          <main className={cn(roboto.className)}>
+
+      <QueryProvider>
+        <StyleProvider>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Component {...pageProps} />
-          </main>
-        </LocalizationProvider>
-      </ThemeProvider>
-    </CacheProvider>
+          </LocalizationProvider>
+        </StyleProvider>
+      </QueryProvider>
+    </AppCacheProvider>
   );
 }
 

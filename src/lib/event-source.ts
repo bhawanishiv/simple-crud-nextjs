@@ -137,6 +137,7 @@ export class CustomEventService {
 
     const data = this.xhr.responseText.substring(this.progress);
     this.progress += data.length;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     data.split(/(\r\n|\r|\n){2}/g).forEach(
       function (part: string) {
@@ -146,7 +147,7 @@ export class CustomEventService {
         } else {
           self.chunk += part;
         }
-      }.bind(this)
+      }.bind(this),
     );
   }
 
@@ -195,7 +196,7 @@ export class CustomEventService {
         } else {
           e[field as EKeys] = value;
         }
-      }.bind(this)
+      }.bind(this),
     );
 
     const event = new CustomEvent(e.event);
@@ -222,7 +223,7 @@ export class CustomEventService {
     this.xhr.addEventListener('load', this._onStreamLoaded.bind(this));
     this.xhr.addEventListener(
       'readystatechange',
-      this._checkStreamClosed.bind(this)
+      this._checkStreamClosed.bind(this),
     );
     this.xhr.addEventListener('error', this._onStreamFailure.bind(this));
     this.xhr.addEventListener('abort', this._onStreamAbort.bind(this));
