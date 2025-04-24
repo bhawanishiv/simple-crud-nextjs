@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import jsYml from 'js-yaml';
