@@ -96,10 +96,11 @@ const MindMapClientPage = () => {
 
   const handleResetState = () => {
     setRootData([]);
-    removeMindMapData(id);
+    removeMindMapData(id || '');
     setError(null);
     setCurrentKey(null);
     reset({ text: '' });
+    router.push('/mind-map');
   };
 
   const handleNewMap = () => {
@@ -164,9 +165,7 @@ const MindMapClientPage = () => {
   };
 
   const removeMindMapData = (id: string) => {
-    const existingData = JSON.parse(
-      localStorage.getItem(LOCAL_STORAGE_KEY) || '{}',
-    );
+    const existingData = getMindMapData();
     delete existingData[id];
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingData));
   };
