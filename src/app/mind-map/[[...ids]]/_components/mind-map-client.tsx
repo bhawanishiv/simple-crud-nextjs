@@ -1,5 +1,6 @@
 'use client';
 
+import Script from 'next/script';
 import React, { useEffect, useState } from 'react';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
@@ -34,6 +35,9 @@ import LoadingText from '@/components/loading-text';
 import { downloadJson } from '@/lib/utils';
 import { useParams, useRouter } from 'next/navigation';
 
+// const scriptSrc = 'https://unpkg.com/jsmind@0.5/es6/jsmind.js';
+const scriptSrc = 'https://unpkg.com/gojs@2.3.5/release/go.js';
+
 // Function to generate a custom unique ID
 function generateCustomId() {
   const timestamp = Date.now().toString();
@@ -63,6 +67,7 @@ const MindMapClientPage = () => {
   const id = params?.['ids']?.at(0) || null;
   const suggestionsQuery = useSuspenseQuery(mindMapSuggestionsOptions);
 
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [rootData, setRootData] = useState<TGoMindMapSchema[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentKey, setCurrentKey] = useState<string | null>(null);
@@ -93,6 +98,11 @@ const MindMapClientPage = () => {
   });
 
   const { isSubmitting } = formState;
+
+  const onScriptLoad = () => {
+    setScriptLoaded(true);
+    console.log('load');
+  };
 
   const handleResetState = () => {
     setRootData([]);
@@ -344,9 +354,19 @@ const MindMapClientPage = () => {
     console.log(`model->`, model, id);
     return (
       <>
+        <Script
+          type="text/javascript"
+          src={scriptSrc}
+          onError={(e) => {
+            console.log(`error->`, e);
+          }}
+          onLoad={onScriptLoad}
+          strategy="lazyOnload"
+        />
         {model ? (
           <div className="relative">
             <MindMap
+              scriptLoaded={scriptLoaded}
               shouldRender={!!id}
               model={model}
               onLoadChildNodes={onLoadChildNodes}
@@ -466,6 +486,16 @@ const MindMapClientPage = () => {
       </>
     );
   };
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      document.querySelector(`script[src="${scriptSrc}"]`) &&
+      !scriptLoaded
+    ) {
+      onScriptLoad();
+    }
+  }, [rootData]);
 
   useEffect(() => {
     if (id) {
