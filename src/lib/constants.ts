@@ -1,3 +1,5 @@
+import { Metadata } from 'next';
+
 export const BASE_INPUT_MODEL_PROMPT_JSON = `
 generate a schema to track software bugs
 
@@ -184,3 +186,14 @@ nodeDataArray:
     dir: 'right'
     loc: '200 -22'
 `;
+
+export const metadataConfig: Metadata = {
+  title: {
+    default: 'Tools of AI',
+    template: '%s | Tools of AI',
+  },
+  description: 'A list of basic AI tools to increase productivity.',
+  authors: {
+    name: 'Bhawani Shankar Bharti',
+  },
+};

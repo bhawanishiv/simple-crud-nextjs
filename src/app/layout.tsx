@@ -6,7 +6,7 @@ import QueryProvider from '@/components/query-provider';
 import StyleProvider from '@/components/style-provider';
 import AppCacheProvider from './app-cache-provider';
 
-import { metadataConfig } from '@/lib/constant';
+import { metadataConfig } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { roboto } from '@/themes';
 
