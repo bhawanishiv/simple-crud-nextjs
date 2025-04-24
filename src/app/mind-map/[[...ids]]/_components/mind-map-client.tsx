@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, KeyboardEvent } from 'react';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import jsYml from 'js-yaml';
@@ -388,6 +388,7 @@ const MindMapClientPage = () => {
                     <TextField
                       fullWidth
                       variant="outlined"
+                      multiline
                       autoFocus
                       disabled={
                         suggestionsQuery.isLoading || aiMutation.isPending
@@ -396,7 +397,7 @@ const MindMapClientPage = () => {
                       slotProps={{
                         input: {
                           classes: {
-                            input: 'py-8',
+                            // input: 'py-8',
                             root: 'rounded-2xl',
                             notchedOutline: 'rounded-2xl',
                           },
@@ -409,34 +410,7 @@ const MindMapClientPage = () => {
                         },
                       }}
                       {...field}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                          const suggestions = suggestionsQuery.data?.list || [];
-                          const currentIndex = suggestions.findIndex(
-                            (item) => item.text === field.value,
-                          );
-
-                          if (suggestions.length === 0) {
-                            return; // Do nothing if there are no suggestions
-                          }
-
-                          let nextIndex = currentIndex;
-                          if (e.key === 'ArrowRight') {
-                            nextIndex =
-                              currentIndex === suggestions.length - 1
-                                ? suggestions.length - 1
-                                : currentIndex + 1;
-                          } else if (e.key === 'ArrowLeft') {
-                            nextIndex =
-                              currentIndex === 0 ? 0 : currentIndex - 1;
-                          }
-
-                          if (nextIndex !== -1) {
-                            field.onChange(suggestions[nextIndex].text || '');
-                          }
-                          e.preventDefault();
-                        }
-                      }}
+                      onKeyDown={handleKeyDown(field)}
                       helperText={
                         aiMutation.isPending ? (
                           <LoadingText isLoading>
@@ -486,6 +460,46 @@ const MindMapClientPage = () => {
       </>
     );
   };
+
+  const handleKeyDown =
+    (field: any) => (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter' || event.key === 'Return') {
+        if (event.shiftKey) {
+          // Allow multi-line input
+          return;
+        }
+
+        event.preventDefault();
+        // Submit the form
+        handleSubmit(handleTriggerInitialQuery)();
+      } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+        const suggestions = suggestionsQuery.data?.list || [];
+        const currentIndex = suggestions.findIndex(
+          (item) => item.text === field.value,
+        );
+
+        if (suggestions.length === 0) {
+          return; // Do nothing if there are no suggestions
+        }
+
+        let nextIndex = currentIndex;
+        if (event.key === 'ArrowRight') {
+          nextIndex =
+            currentIndex === suggestions.length - 1
+              ? suggestions.length - 1
+              : currentIndex + 1;
+        } else if (event.key === 'ArrowLeft') {
+          nextIndex = currentIndex === 0 ? 0 : currentIndex - 1;
+        }
+
+        console.log(`suggestions->`, suggestions, nextIndex);
+
+        if (nextIndex > -1) {
+          field.onChange(suggestions[nextIndex].text || '');
+        }
+        event.preventDefault();
+      }
+    };
 
   useEffect(() => {
     if (
