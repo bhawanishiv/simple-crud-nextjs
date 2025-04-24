@@ -9,7 +9,7 @@ import { AppCacheProvider } from '@mui/material-nextjs/v15-pagesRouter';
 import StyleProvider from '@/components/style-provider';
 import QueryProvider from '@/components/query-provider';
 
-import { metadataConfig } from '@/lib/constant';
+import { metadataConfig } from '@/lib/constants';
 
 import '@/styles/globals.css';
 import '@/styles/styles.css';
