@@ -240,20 +240,22 @@ const AddOrUpdateSchemaItem: React.FC<AddOrUpdateSchemaItemProps> = (props) => {
                   onChange={(newValue) => {
                     onChange(newValue?.toISOString());
                   }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      variant="filled"
-                      fullWidth
-                      required={field.required}
-                      helperText={
-                        errors[field.name]
-                          ? (errors[field.name]?.message as React.ReactNode)
-                          : ''
-                      }
-                      error={Boolean(errors[field.name])}
-                    />
-                  )}
+                  slots={{
+                    textField: (params) => (
+                      <TextField
+                        {...params}
+                        variant="filled"
+                        fullWidth
+                        required={field.required}
+                        helperText={
+                          errors[field.name]
+                            ? (errors[field.name]?.message as React.ReactNode)
+                            : ''
+                        }
+                        error={Boolean(errors[field.name])}
+                      />
+                    ),
+                  }}
                 />
               );
             }}

@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import jsYml from 'js-yaml';
 
 import _ from 'lodash';
-import { TGoMindMapSchema } from '@/lib/schema';
+import { TGoMindMapSchema, TNodeData } from '@/interfaces/ai';
 
 import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
@@ -14,17 +14,38 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 
-import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 import EastOutlinedIcon from '@mui/icons-material/EastOutlined';
+import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
+import ArrowDownwardOutlinedIcon from '@mui/icons-material/ArrowDownwardOutlined';
+import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 
 import MindMap from '@/components/ui/MindMap';
 
 import { MIND_MAP_PROMPT_HELPER } from '@/lib/constants';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { TAiRequest } from '@/interfaces/ai';
+import { TAiRequestWithSchema } from '@/interfaces/ai';
 import CustomIconButton from '@/components/ui/custom-icon-button';
-import { getAiResponse } from '@/services/ai';
 import { mindMapSuggestionsOptions } from '@/queries/mind-map';
+import { generateObjectAction } from '@/action/ai';
+import MindMapNodeFetchDialog from '@/components/ui/mind-map-node-fetch.dioalog';
+import LoadingText from '@/components/loading-text';
+import { downloadJson } from '@/lib/utils';
+import { useParams, useRouter } from 'next/navigation';
+
+// Function to generate a custom unique ID
+function generateUuid() {
+  const timestamp = Date.now().toString();
+  const alphanumeric =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let randomString = '';
+  for (let i = 0; i < 8; i++) {
+    randomString += alphanumeric.charAt(
+      Math.floor(Math.random() * alphanumeric.length),
+    );
+  }
+  return `${randomString}.${timestamp}`;
+}
 
 // type MindMapPageProps = {
 // };
@@ -33,33 +54,38 @@ type TFormValues = {
   text: string;
 };
 
-type TNodeData = {
-  key: string;
-  text: string;
-  parent: string;
-  dir?: string;
-  brush?: string;
-};
-
 const MindMapClientPage = () => {
+  const router = useRouter();
+  const params = useParams();
+  const id = params?.['ids']?.at(0) || null;
   const suggestionsQuery = useSuspenseQuery(mindMapSuggestionsOptions);
 
-  console.log(`suggestionsQuery->`, suggestionsQuery);
   const [rootData, setRootData] = useState<TGoMindMapSchema[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [currentKey, setCurrentKey] = useState<string | null>(null);
 
-  const aiMutation = useMutation<TGoMindMapSchema | null, Error, TAiRequest>({
+  const { formState, control, reset, handleSubmit } = useForm<TFormValues>({
+    defaultValues: {
+      text: '',
+    },
+  });
+
+  const aiMutation = useMutation<
+    TGoMindMapSchema | null,
+    Error,
+    TAiRequestWithSchema
+  >({
+    mutationKey: ['mind-map', 'generate', rootData.length],
     mutationFn: async (data) => {
-      return (await getAiResponse<TGoMindMapSchema, any>(data)).data;
+      return await generateObjectAction<TGoMindMapSchema>(data);
     },
     onError(error) {
       setError(error.message);
     },
-  });
-
-  const { formState, control, handleSubmit } = useForm<TFormValues>({
-    defaultValues: {
-      text: '',
+    onSuccess() {
+      setError(null);
+      setCurrentKey(null);
+      reset({ text: '' });
     },
   });
 
@@ -67,20 +93,38 @@ const MindMapClientPage = () => {
 
   const handleResetState = () => {
     setRootData([]);
+    localStorage.removeItem(`mind-map:${id}`);
+    setError(null);
+    setCurrentKey(null);
+    reset({ text: '' });
   };
 
-  const addRootData = (data: TGoMindMapSchema | null) => {
+  const handleNewMap = () => {
+    setRootData([]);
+    setError(null);
+    setCurrentKey(null);
+    reset({ text: '' });
+    router.push('/mind-map');
+  };
+
+  const addRootData = (data: TGoMindMapSchema | null, newId: string) => {
     if (!data) return;
     setRootData((d) => {
       const newData = [...d];
       const lastData = newData[newData.length - 1];
       newData.push({
-        ...(newData.length ? {} : data),
+        ...(newData.length
+          ? {
+              class: 'go.TreeModel',
+            }
+          : data),
         nodeDataArray: [
           ...(lastData ? lastData.nodeDataArray : []),
           ...(newData.length ? data.nodeDataArray : data.nodeDataArray),
         ],
       });
+
+      localStorage.setItem(`mind-map:${newId}`, JSON.stringify(newData.at(-1)));
       return newData;
     });
   };
@@ -90,24 +134,34 @@ const MindMapClientPage = () => {
   ) => {
     try {
       const response = await aiMutation.mutateAsync({
-        system: MIND_MAP_PROMPT_HELPER,
+        system: MIND_MAP_PROMPT_HELPER.replace('{{placeholder}}', ''),
         prompt: values.text,
         stream: false,
         schema: 'mind-map',
       });
-      addRootData(response);
+
+      if (response) {
+        const newId = generateUuid();
+        addRootData(response, newId);
+        // Generate a custom unique ID and push it into the route
+        router.push(`/mind-map/${newId}`);
+      }
     } catch (e) {
-      //
       console.log(`e->`, e);
     }
   };
 
   const onLoadChildNodes = async (key: string) => {
+    setCurrentKey(key);
+  };
+
+  const handleFetchChildNodes: SubmitHandler<{ text: string }> = async (
+    values,
+  ) => {
     try {
       const { nodeDataArray } = rootData[rootData.length - 1];
-
       const obj: Record<string, TNodeData> = {};
-      let root: TNodeData | undefined;
+      let root: TNodeData | null = null;
 
       for (const item of nodeDataArray) {
         obj[item.key] = item;
@@ -116,48 +170,78 @@ const MindMapClientPage = () => {
         }
       }
 
-      let item = obj[key];
+      if (!currentKey || !obj[currentKey]) throw new Error();
 
-      if (!item) throw new Error();
+      const text = `USER QUERY: "${values.text}"\n`;
 
-      const text = `Fetch the child nodes of '${item.text}' mind map\nNote: '${item.text}' is sub mind map of '${root?.text}' mind map`;
+      const systemPromptPlaceholder = `\nNOTE: "${obj[currentKey].text}" is sub mind map of "${root?.text}" mind map`;
 
-      const parents: TNodeData[] = [];
+      const parents: Partial<TNodeData>[] = [];
 
-      while (Boolean(item)) {
+      let finalItem: TNodeData | undefined = obj[currentKey];
+
+      while (Boolean(finalItem)) {
+        console.log(`finalItem->`, finalItem);
         parents.push(
-          _.pick(item, ['key', 'text', 'parent', 'dir', 'brush', 'dir']),
+          _.pick(finalItem, ['key', 'text', 'parent', 'dir', 'brush', 'dir']),
         );
-        item = obj[item.parent];
+        finalItem = obj[finalItem.parent || ''];
       }
 
-      const str = jsYml.dump({ parents });
-      const prompt = text + '\n\n' + str + '\nremainingNodes:';
+      const str = jsYml.dump({ parents, entireMap: nodeDataArray });
+      const prompt = text + '\n\CURRENT_PARENTS:\n' + str + '\n\n';
 
       console.log(`prompt->`, prompt);
 
+      const updatedSystemPrompt = MIND_MAP_PROMPT_HELPER.replace(
+        '{{placeholder}}',
+        systemPromptPlaceholder,
+      );
       const response = await aiMutation.mutateAsync({
-        system: MIND_MAP_PROMPT_HELPER,
+        system: updatedSystemPrompt,
         prompt: prompt,
         stream: false,
         schema: 'mind-map',
       });
 
       console.log(`new_datadata->`, response);
-      addRootData(response);
-    } catch (e: Error) {
+
+      if (response) {
+        addRootData(response, id || generateUuid());
+      }
+      setCurrentKey(null);
+    } catch (e) {
       console.log(`e->`, e);
     } finally {
       //
     }
   };
 
+  const handleCancelAiMutation = () => {
+    aiMutation.reset();
+    setError(null);
+    setCurrentKey(null);
+    reset({ text: '' });
+  };
+
+  const handleDownloadJSON = () => {
+    downloadJson(
+      rootData[rootData.length - 1],
+      rootData[0]?.nodeDataArray?.find((node) => node.key === '0')?.text ||
+        'mind-map',
+    );
+  };
+
   const renderAction = () => {
     if (isSubmitting || aiMutation.isPending)
       return (
-        <div className="px-2">
-          <CircularProgress size={16} />
-        </div>
+        <CustomIconButton
+          onClick={handleCancelAiMutation}
+          color="error"
+          type="submit"
+        >
+          <StopOutlinedIcon />
+        </CustomIconButton>
       );
 
     return (
@@ -186,11 +270,38 @@ const MindMapClientPage = () => {
         </div>
         <div>
           <Button
-            endIcon={<RefreshOutlinedIcon />}
-            sx={{ borderRadius: 6 }}
+            color="primary"
+            variant="contained"
+            disableElevation
+            endIcon={<AddOutlinedIcon />}
+            onClick={handleNewMap}
+            disabled={
+              aiMutation.isPending ||
+              suggestionsQuery.isLoading ||
+              rootData.length === 0
+            }
+          >
+            New Map
+          </Button>
+        </div>
+        <div>
+          <Button
+            variant="contained"
+            color="secondary"
+            disableElevation
+            endIcon={<ArrowDownwardOutlinedIcon />}
+            onClick={handleDownloadJSON}
+          >
+            Download JSON
+          </Button>
+        </div>
+
+        <div>
+          <Button
+            endIcon={<DeleteForeverOutlinedIcon />}
             onClick={handleResetState}
           >
-            Reset
+            Clear
           </Button>
         </div>
       </div>
@@ -254,10 +365,18 @@ const MindMapClientPage = () => {
                           e.preventDefault();
                         }
                       }}
+                      helperText={
+                        aiMutation.isPending ? (
+                          <LoadingText isLoading>
+                            Fetching suitable results
+                          </LoadingText>
+                        ) : null
+                      }
                       slotProps={{
                         input: {
                           classes: {
-                            root: 'rounded-2xl py-4',
+                            input: 'py-8',
+                            root: 'rounded-2xl',
                             notchedOutline: 'rounded-2xl',
                           },
                           endAdornment: (
@@ -269,14 +388,6 @@ const MindMapClientPage = () => {
                       }}
                     />
                   );
-                  // <input
-                  //   className="py-3 pl-4 pr-12 bg-transparent outline-none w-full"
-                  //   placeholder="e.g. A vacation planning to london"
-                  //   {...register('text')}
-                  // />
-                  // <div className="absolute right-0 top-1/2 transform -translate-y-1/2 px-1  ">
-                  //   {renderAction()}
-                  // </div>
                 }}
               />
               {suggestionsQuery.isLoading && (
@@ -292,10 +403,29 @@ const MindMapClientPage = () => {
             </div>
           </form>
         )}
+        <MindMapNodeFetchDialog
+          open={!!currentKey}
+          isSubmitting={aiMutation.isPending}
+          onSubmit={handleFetchChildNodes}
+          onCancel={handleCancelAiMutation}
+          onClose={() => setCurrentKey(null)}
+        />
       </>
     );
   };
 
+  useEffect(() => {
+    if (id) {
+      try {
+        const storedMap = localStorage.getItem(`mind-map:${id}`);
+        if (storedMap) {
+          setRootData([JSON.parse(storedMap)]);
+        }
+      } catch (error) {
+        console.log(`error->`, error);
+      }
+    }
+  }, [id]);
   return renderMindMapPage();
 };
 

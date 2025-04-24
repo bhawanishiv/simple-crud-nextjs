@@ -22,7 +22,7 @@ const HomePage = () => {
   const renderHomePage = () => {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
-        <ul className="flex flex-col md:flex-row md:items-center gap-3">
+        <ul className="flex flex-col md:flex-row md:items-center gap-3 list-none">
           {items.map((item, i) => {
             return (
               <li key={i}>

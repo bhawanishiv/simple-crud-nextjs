@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Html, Head, Main, NextScript } from 'next/document';
+import { Html, Head, Main, NextScript, DocumentContext } from 'next/document';
 import {
   DocumentHeadTags,
   documentGetInitialProps,
@@ -21,7 +21,7 @@ export default function MyDocument(props: any) {
   );
 }
 
-MyDocument.getInitialProps = async (ctx) => {
+MyDocument.getInitialProps = async (ctx: DocumentContext) => {
   const finalProps = await documentGetInitialProps(ctx);
   return finalProps;
 };

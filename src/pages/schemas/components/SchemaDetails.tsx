@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
 import {
   IDynamicSchema,
   IDynamicSchemaField,
@@ -9,7 +8,6 @@ import useSwr from 'swr';
 import dayjs from 'dayjs';
 
 import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -20,7 +18,7 @@ import Chip from '@mui/material/Chip';
 
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
-import SchemaChat from '@/containers/SchemaChat';
+import SchemaChat from '@/components/SchemaChat';
 
 import AddOrUpdateSchemaField from './AddOrUpdateSchemaField';
 
@@ -39,7 +37,7 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
 
   const { isLoading, isValidating, data, mutate } = useSwr(
     schema ? `${schema.name}` : null,
-    () => getSchemaFields(schema.name)
+    () => getSchemaFields(schema.name),
   );
 
   const [currentField, setCurrentField] = useState<boolean | any>(null);
@@ -83,7 +81,7 @@ const SchemaDetails: React.FC<SchemaDetailsProps> = (props) => {
       <Grid sx={{ my: 1 }} container rowSpacing={1} columnSpacing={1}>
         {fields.map((field: IDynamicSchemaField) => {
           return (
-            <Grid key={field.id} item xs={6}>
+            <Grid key={field.id} size={6}>
               <Card variant="outlined" className="rounded-xl">
                 <CardContent>
                   {/* <div className="border rounded-xl py-2 px-6 w-full"> */}
