@@ -77,7 +77,7 @@ export const generateObjectAction = async <T = ZodType>(
     if (
       await checkRateLimits({
         feature: `generateObject:${payload.schema}`,
-        maxRequests: payload.schema === 'list(string)' ? 10 : 5,
+        maxRequests: payload.schema === 'list(string)' ? 10 : undefined,
       })
     ) {
       console.log('rate limit exceeded');

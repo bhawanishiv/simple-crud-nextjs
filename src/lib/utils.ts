@@ -82,3 +82,14 @@ export const downloadJson = <T extends object>(data: T, filename: string) => {
 
   URL.revokeObjectURL(url);
 };
+
+export function getEnvNumericValue(
+  envVar: string | undefined,
+  defaultValue: number,
+): number {
+  if (envVar === undefined) {
+    return defaultValue;
+  }
+  const parsedValue = parseInt(envVar, 10);
+  return isNaN(parsedValue) ? defaultValue : parsedValue;
+}

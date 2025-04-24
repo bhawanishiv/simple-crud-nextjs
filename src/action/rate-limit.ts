@@ -1,3 +1,5 @@
+import { getEnvNumericValue } from '@/lib/utils';
+
 const idToRequestCount = new Map<string, number>(); // keeps track of individual users and features
 const rateLimiter = {
   windowStart: Date.now(),
@@ -5,8 +7,11 @@ const rateLimiter = {
 
 const DEFAULT_RATE_LIMIT_CONFIG = {
   feature: 'default',
-  maxRequests: 2,
-  windowSize: 24 * 60 * 60 * 1000, // Milliseconds (currently 1 day)
+  maxRequests: getEnvNumericValue(process.env.RATE_LIMIT_MAX_REQUESTS, 2),
+  windowSize: getEnvNumericValue(
+    process.env.RATE_LIMIT_WINDOW_SECONDS,
+    24 * 60 * 60 * 1000,
+  ), // Milliseconds (currently 1 day)
 };
 
 /**
@@ -33,9 +38,13 @@ export const rateLimit = (
   } = options || DEFAULT_RATE_LIMIT_CONFIG;
   // Check and update current window
 
+  console.log(
+    'idToRequestCount:',
+    { windowSize, feature, maxRequests },
+    JSON.stringify(Object.fromEntries(idToRequestCount)),
+  );
   const now = Date.now();
   const isNewWindow = now - rateLimiter.windowStart > windowSize;
-  console.log(`ip->`, ip, feature, isNewWindow);
 
   if (isNewWindow) {
     rateLimiter.windowStart = now;
@@ -48,11 +57,6 @@ export const rateLimit = (
   // Check and update current request limits
   const currentRequestCount = idToRequestCount.get(key) ?? 0;
 
-  console.log(
-    `currentRequestCount,rateLimiter->`,
-    currentRequestCount,
-    rateLimiter,
-  );
   if (currentRequestCount >= maxRequests) return true;
   idToRequestCount.set(key, currentRequestCount + 1);
 
