@@ -10,9 +10,25 @@ import {
   schemas,
 } from '@/interfaces/ai';
 import { ZodType } from 'zod';
+import { headers } from 'next/headers';
+import { rateLimit } from './rate-limit';
+
+async function checkRateLimits(options?: {
+  feature?: string;
+  maxRequests?: number;
+  windowSize?: number;
+}) {
+  const ip = (await headers()).get('x-forwarded-for') ?? 'unknown';
+  return rateLimit(ip, options);
+}
 
 export const streamObjectAction = async <T = ZodType>(payload: TAiRequest) => {
   try {
+    if (await checkRateLimits()) {
+      console.log('rate limit exceeded');
+      throw new Error('Rate limit exceeded');
+    }
+
     const { schema, ...restBody } =
       await aiRequestWithSchemaSchema.parseAsync(payload); // Validate request body
 
@@ -38,6 +54,10 @@ export const streamObjectAction = async <T = ZodType>(payload: TAiRequest) => {
 
 export const streamTextAction = async (payload: TAiRequest) => {
   try {
+    if (await checkRateLimits()) {
+      console.log('rate limit exceeded');
+      throw new Error('Rate limit exceeded');
+    }
     const body = await aiRequestSchema.parseAsync(payload); // Validate request body
     const result = streamText({
       ...body,
@@ -54,6 +74,15 @@ export const generateObjectAction = async <T = ZodType>(
   payload: TAiRequestWithSchema,
 ) => {
   try {
+    if (
+      await checkRateLimits({
+        feature: `generateObject:${payload.schema}`,
+        maxRequests: payload.schema === 'list(string)' ? 10 : 5,
+      })
+    ) {
+      console.log('rate limit exceeded');
+      throw new Error('Rate limit exceeded');
+    }
     const { schema, ...restBody } =
       await aiRequestWithSchemaSchema.parseAsync(payload); // Validate request body
 
@@ -77,6 +106,10 @@ export const generateObjectAction = async <T = ZodType>(
 
 export const generateTextAction = async (payload: TAiRequest) => {
   try {
+    if (await checkRateLimits()) {
+      console.log('rate limit exceeded');
+      throw new Error('Rate limit exceeded');
+    }
     const body = await aiRequestSchema.parseAsync(payload); // Validate request body
 
     const {
