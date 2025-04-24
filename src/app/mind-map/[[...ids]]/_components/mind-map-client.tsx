@@ -35,7 +35,7 @@ import { downloadJson } from '@/lib/utils';
 import { useParams, useRouter } from 'next/navigation';
 
 // Function to generate a custom unique ID
-function generateUuid() {
+function generateCustomId() {
   const timestamp = Date.now().toString();
   const alphanumeric =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -45,8 +45,10 @@ function generateUuid() {
       Math.floor(Math.random() * alphanumeric.length),
     );
   }
-  return `${randomString}.${timestamp}`;
+  return `${timestamp}-${randomString}`;
 }
+
+const LOCAL_STORAGE_KEY = 'mindMapData';
 
 // type MindMapPageProps = {
 // };
@@ -94,7 +96,7 @@ const MindMapClientPage = () => {
 
   const handleResetState = () => {
     setRootData([]);
-    localStorage.removeItem(`mind-map:${id}`);
+    removeMindMapData(id);
     setError(null);
     setCurrentKey(null);
     reset({ text: '' });
@@ -108,7 +110,7 @@ const MindMapClientPage = () => {
     router.push('/mind-map');
   };
 
-  const addRootData = (data: TGoMindMapSchema | null, newId: string) => {
+  const addRootData = (data: TGoMindMapSchema | null, id: string) => {
     if (!data) return;
     setRootData((d) => {
       const newData = [...d];
@@ -125,7 +127,15 @@ const MindMapClientPage = () => {
         ],
       });
 
-      localStorage.setItem(`mind-map:${newId}`, JSON.stringify(newData.at(-1)));
+      // Retrieve existing data from local storage
+      const existingData = getMindMapData();
+
+      // Add the new entry
+      existingData[id] = newData[newData.length - 1];
+
+      // Save the updated data back to local storage
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingData));
+
       return newData;
     });
   };
@@ -142,13 +152,34 @@ const MindMapClientPage = () => {
       });
 
       if (response) {
-        const newId = generateUuid();
+        const newId = generateCustomId();
         addRootData(response, newId);
+
         // Generate a custom unique ID and push it into the route
         router.push(`/mind-map/${newId}`);
       }
     } catch (e) {
       console.log(`e->`, e);
+    }
+  };
+
+  const removeMindMapData = (id: string) => {
+    const existingData = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEY) || '{}',
+    );
+    delete existingData[id];
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingData));
+  };
+
+  const getMindMapData = (): Record<string, TGoMindMapSchema> => {
+    let data = {};
+    try {
+      data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+    } catch (error) {
+      console.log(`error->`, error);
+      data = {};
+    } finally {
+      return data;
     }
   };
 
@@ -208,7 +239,7 @@ const MindMapClientPage = () => {
       console.log(`new_datadata->`, response);
 
       if (response) {
-        addRootData(response, id || generateUuid());
+        addRootData(response, id || '');
       }
       setCurrentKey(null);
     } catch (e) {
@@ -439,14 +470,10 @@ const MindMapClientPage = () => {
 
   useEffect(() => {
     if (id) {
-      try {
-        const storedMap = localStorage.getItem(`mind-map:${id}`);
-        console.log(`storedMap->`, storedMap);
-        if (storedMap) {
-          setRootData([JSON.parse(storedMap)]);
-        }
-      } catch (error) {
-        console.log(`error->`, error);
+      const storedMap = getMindMapData();
+
+      if (storedMap[id]) {
+        setRootData([storedMap[id]]);
       }
     }
   }, [id]);
