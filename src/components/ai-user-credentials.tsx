@@ -5,6 +5,7 @@ import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import InputLabel from '@mui/material/InputLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import Autocomplete from '@mui/material/Autocomplete';
 import Menu from '@mui/material/Menu';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
@@ -20,6 +21,24 @@ const SUPPORTED_PROVIDERS = [
   'anthropic',
   'google',
   'google vertex',
+];
+
+const MODELS = [
+  'gpt-4.1',
+  'gpt-4o',
+  'gpt-o4-mini',
+  'gpt-o3',
+  'gpt-o3-mini',
+  'gpt-4',
+  'gpt-3.5-turbo',
+  'claude-3-7-sonnet-latest',
+  'claude-3-5-sonnet-latest',
+  'claude-3-sonnet-20240229',
+  'claude-3-haiku-20240307',
+  'gemini-1.5',
+  'gemini-2.0-flash',
+  'vertex:gemini-1.5',
+  'vertex:gemini-2.0-flash',
 ];
 
 type TFormFieldOptions = {
@@ -94,7 +113,8 @@ export default function AiUserCredentials() {
     handleClose();
   };
 
-  const model = watch('model');
+  const model = watch('model') || '';
+
   const isOpen = Boolean(anchorEl);
 
   const renderApiKeyField = (options?: TFormFieldOptions) => {
@@ -126,6 +146,9 @@ export default function AiUserCredentials() {
               error={!!errors.apiKey}
               helperText={errors.apiKey?.message}
               slotProps={{
+                htmlInput: {
+                  autoComplete: 'new-password',
+                },
                 input: {
                   className: 'py-1.5',
                   endAdornment: (
@@ -457,17 +480,31 @@ export default function AiUserCredentials() {
                   Model Name
                 </InputLabel>
 
-                <TextField
-                  id={`${field.name}El`}
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="e.g. gpt-4.1, vertex:gemini-1.5, azure:gpt-4o, claude-3"
-                  variant="outlined"
+                <Autocomplete
                   {...field}
-                  slotProps={{
-                    input: {
-                      className: 'py-1.5',
-                    },
+                  disablePortal
+                  fullWidth
+                  id={`${field.name}El`}
+                  options={MODELS}
+                  freeSolo
+                  onChange={(event, value) => {
+                    field.onChange(value);
+                  }}
+                  className="w-full"
+                  renderInput={(params) => {
+                    return (
+                      <TextField
+                        placeholder="e.g. gpt-4.1, vertex:gemini-1.5, azure:gpt-4o, claude-3"
+                        variant="outlined"
+                        {...params}
+                        slotProps={{
+                          htmlInput: {
+                            ...params.inputProps,
+                            autoComplete: 'new-password',
+                          },
+                        }}
+                      />
+                    );
                   }}
                 />
               </div>

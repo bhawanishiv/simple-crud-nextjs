@@ -132,7 +132,6 @@ export const generateObjectAction = async <T = ZodType>(
     return result.object as T;
   } catch (error) {
     console.log(`error->`, error);
-    console.error(error.stack);
     return null;
   }
 };
