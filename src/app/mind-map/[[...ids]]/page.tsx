@@ -1,8 +1,8 @@
+import { Metadata } from 'next';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query-client';
 import { mindMapSuggestionsOptions } from '@/queries/mind-map';
 import MindMapClientPage from './_components/mind-map-client';
-import { Metadata } from 'next';
 
 export const dynamicParams = true;
 // or false, to 404 on unknown paths
