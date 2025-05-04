@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import {
+  useForm,
+  Controller,
+  SubmitHandler,
+  SubmitErrorHandler,
+} from 'react-hook-form';
 import InputLabel from '@mui/material/InputLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -61,6 +66,8 @@ type TFormValues = {
 export default function AiUserCredentials() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [apiKeyVisible, setApiKeyVisible] = React.useState(false);
+  const [isCredentialsAvailable, setIsCredentialsAvailable] =
+    React.useState(false);
 
   const credentials = useAiCredentials();
 
@@ -110,7 +117,12 @@ export default function AiUserCredentials() {
     console.log(`filteredData->`, filteredData);
     setApiKeyVisible(false);
     credentials.setValues(filteredData);
+    setIsCredentialsAvailable(true);
     handleClose();
+  };
+
+  const onSubmitError: SubmitErrorHandler<TFormValues> = (errors) => {
+    setIsCredentialsAvailable(false);
   };
 
   const model = watch('model') || '';
@@ -431,7 +443,9 @@ export default function AiUserCredentials() {
       <div className="fixed bottom-2 right-3  z-10">
         <IconButton onClick={handleOpen}>
           {/* <Badge variant="dot" color="primary" invisible={invisible}> */}
-          <SettingsOutlinedIcon />
+          <SettingsOutlinedIcon
+            color={isCredentialsAvailable ? 'primary' : 'inherit'}
+          />
           {/* </Badge> */}
         </IconButton>
       </div>
@@ -443,7 +457,10 @@ export default function AiUserCredentials() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="p-4 w-md">
+        <form
+          onSubmit={handleSubmit(onSubmit, onSubmitError)}
+          className="p-4 w-md"
+        >
           <div className="pb-4">
             <Typography variant="h6" className="font-semilight">
               You can use your own LLM provider
