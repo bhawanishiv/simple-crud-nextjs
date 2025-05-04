@@ -15,7 +15,7 @@ export default function QueryProvider({
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools />
+      {/* <ReactQueryDevtools position="top" /> */}
     </QueryClientProvider>
   );
 }

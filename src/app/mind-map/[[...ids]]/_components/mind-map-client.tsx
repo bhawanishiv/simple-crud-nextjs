@@ -34,6 +34,7 @@ import MindMapNodeFetchDialog from '@/components/ui/mind-map-node-fetch.dioalog'
 import LoadingText from '@/components/loading-text';
 import { downloadJson } from '@/lib/utils';
 import { useParams, useRouter } from 'next/navigation';
+import { useAiCredentials } from '@/hooks/use-ai-credentials';
 
 // const scriptSrc = 'https://unpkg.com/jsmind@0.5/es6/jsmind.js';
 const scriptSrc = 'https://unpkg.com/gojs@2.3.5/release/go.js';
@@ -77,6 +78,8 @@ const MindMapClientPage = () => {
       text: '',
     },
   });
+
+  const credentials = useAiCredentials();
 
   const aiMutation = useMutation<
     TGoMindMapSchema | null,
@@ -159,6 +162,7 @@ const MindMapClientPage = () => {
         prompt: values.text,
         stream: false,
         schema: 'mind-map',
+        ...credentials.values,
       });
 
       if (response) {
@@ -239,16 +243,17 @@ const MindMapClientPage = () => {
         prompt: prompt,
         stream: false,
         schema: 'mind-map',
+        ...credentials.values,
       });
 
       if (response) {
         addRootData(response, id || '');
       }
-      setCurrentKey(null);
     } catch (e) {
       // console.log(`e->`, e);
     } finally {
       //
+      setCurrentKey(null);
     }
   };
 

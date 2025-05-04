@@ -26,6 +26,14 @@ export const aiRequestSchema = z.object({
   system: z.string(),
   prompt: z.string(),
   stream: z.boolean().optional(),
+  apiKey: z.string().optional(),
+  model: z.string().optional(),
+  resourceName: z.string().optional(),
+  baseURL: z.string().optional(),
+  apiVersion: z.string().optional(),
+  reasoning: z.enum(['medium', 'low', 'high']).optional(),
+  clientEmail: z.string().optional(),
+  privateKey: z.string().optional(),
 });
 
 export const aiRequestWithSchemaSchema = aiRequestSchema.extend({
