@@ -350,7 +350,10 @@ const MindMap: React.FC<MindMapProps> = (props) => {
 
   useEffect(() => {
     (async () => {
-      if (loadChildNodes) await onLoadChildNodes(loadChildNodes);
+      if (loadChildNodes) {
+        await onLoadChildNodes(loadChildNodes);
+        setLoadChildNodes('');
+      }
     })();
   }, [loadChildNodes]);
 

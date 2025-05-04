@@ -249,11 +249,11 @@ const MindMapClientPage = () => {
       if (response) {
         addRootData(response, id || '');
       }
-      setCurrentKey(null);
     } catch (e) {
       // console.log(`e->`, e);
     } finally {
       //
+      setCurrentKey(null);
     }
   };
 
