@@ -76,6 +76,7 @@ export default function AiUserCredentials() {
     handleSubmit,
     watch,
     reset,
+    trigger,
     formState: { errors },
   } = useForm<TFormValues>({
     defaultValues: {
@@ -133,6 +134,7 @@ export default function AiUserCredentials() {
     const { required = false, placeholder } = options || {};
     return (
       <Controller
+        key="apiKey"
         name="apiKey"
         control={control}
         rules={{
@@ -187,6 +189,7 @@ export default function AiUserCredentials() {
     const { required = false, placeholder } = options || {};
     return (
       <Controller
+        key="apiVersion"
         name="apiVersion"
         control={control}
         rules={{
@@ -227,6 +230,7 @@ export default function AiUserCredentials() {
     const { required = false, placeholder } = options || {};
     return (
       <Controller
+        key="baseURL"
         name="baseURL"
         control={control}
         rules={{
@@ -267,6 +271,7 @@ export default function AiUserCredentials() {
     const { required = false, placeholder } = options || {};
     return (
       <Controller
+        key="resourceName"
         name="resourceName"
         control={control}
         rules={{
@@ -307,6 +312,7 @@ export default function AiUserCredentials() {
     const { required = false, placeholder } = options || {};
     return (
       <Controller
+        key="clientEmail"
         name="clientEmail"
         control={control}
         rules={{
@@ -347,6 +353,7 @@ export default function AiUserCredentials() {
     const { required = false, placeholder } = options || {};
     return (
       <Controller
+        key="privateKey"
         name="privateKey"
         control={control}
         rules={{
@@ -433,6 +440,7 @@ export default function AiUserCredentials() {
         clientEmail: credentials.values.clientEmail || '',
         privateKey: credentials.values.privateKey || '',
       });
+      trigger();
     } else {
       setApiKeyVisible(false);
     }
@@ -505,6 +513,9 @@ export default function AiUserCredentials() {
                   options={MODELS}
                   freeSolo
                   onChange={(event, value) => {
+                    field.onChange(value);
+                  }}
+                  onInputChange={(event, value) => {
                     field.onChange(value);
                   }}
                   className="w-full"
